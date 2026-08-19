@@ -110,6 +110,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
   const techEarthRef = useRef(null)
   const aboutUsTextMeshRef = useRef(null)
   const bloomPassNodeRef = useRef(null)
+  const aboutUsBaseY = useRef(-0.3)
   const baseOffsetPx = useRef(0) // pixel translateX after O-gap snap
   const isIntroComplete = useRef(false)
 
@@ -182,6 +183,13 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       controls.update()
       blackHoleSimulation.update(deltaTime, camera)
       techEarth.update(deltaTime)
+
+      // Subtle weightless breathing float on About Us text when revealed
+      if (aboutUsTextMeshRef.current && aboutUsTextMeshRef.current.material.opacity > 0.05) {
+        const time = currentTime * 0.001
+        aboutUsTextMeshRef.current.position.y = aboutUsBaseY.current + Math.sin(time * 1.5) * 0.025
+        aboutUsTextMeshRef.current.position.x = Math.cos(time * 1.0) * 0.015
+      }
 
       if (postProcessing) {
         postProcessing.render()
@@ -381,10 +389,17 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setPosition(0, -4.1 * t, 0)
               techEarth.setScale(1.15 + 0.35 * t) // 1.15 -> 1.50
             }
-            // "ABOUT US" text sits in 3D BEHIND the Earth at Z = -2.4
+            // "ABOUT US" text rises gracefully from behind the Earth with subtle depth glide & scale
             if (aboutMesh) {
-              aboutMesh.material.opacity = Math.min(1.0, t * 1.5)
-              aboutMesh.position.set(0, -0.3, -2.4)
+              const easeT = Math.sin(t * Math.PI * 0.5) // Smooth ease-out sine
+              const targetY = -0.70 + 0.40 * easeT     // Rises upward from -0.70 to -0.30
+              const targetZ = -2.80 + 0.40 * easeT     // Glides forward from -2.80 to -2.40
+              const targetScale = 0.92 + 0.08 * easeT  // Subtly elevates scale 0.92 -> 1.0
+
+              aboutUsBaseY.current = targetY
+              aboutMesh.position.set(0, targetY, targetZ)
+              aboutMesh.scale.set(targetScale, targetScale, 1.0)
+              aboutMesh.material.opacity = Math.min(1.0, Math.pow(t, 1.2) * 1.4)
             }
           }
         }

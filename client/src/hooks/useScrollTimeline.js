@@ -9,6 +9,12 @@ export function useScrollTimeline() {
   const lenisRef = useRef(null)
 
   useEffect(() => {
+    // Disable browser scroll restoration so refresh always starts at top
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual'
+    }
+    window.scrollTo(0, 0)
+
     const lenis = new Lenis({
       duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -18,6 +24,7 @@ export function useScrollTimeline() {
     })
 
     lenisRef.current = lenis
+    lenis.scrollTo(0, { immediate: true })
 
     // Sync Lenis with GSAP ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update)
@@ -30,7 +37,6 @@ export function useScrollTimeline() {
     return () => {
       gsap.ticker.remove(tick)
       lenis.destroy()
-      ScrollTrigger.getAll().forEach(st => st.kill())
     }
   }, [])
 

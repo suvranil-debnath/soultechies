@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import './index.css'
 import Scene from './canvas/Scene'
 import Preloader from './components/Preloader'
@@ -13,6 +14,20 @@ function App() {
 
   // Initialize Lenis smooth scroll + GSAP ScrollTrigger
   useScrollTimeline()
+
+  // Lock scroll during preloader, reset to top, and refresh on complete
+  useEffect(() => {
+    if (!isPreloaderDone) {
+      document.body.style.overflow = 'hidden'
+      window.scrollTo(0, 0)
+    } else {
+      document.body.style.overflow = ''
+      window.scrollTo(0, 0)
+      setTimeout(() => {
+        ScrollTrigger.refresh()
+      }, 100)
+    }
+  }, [isPreloaderDone])
 
   // Called by HeroSection once it has measured the 'O' gap pixel offset from screen center
   const handleGapMeasured = useCallback((screenOffsetX) => {

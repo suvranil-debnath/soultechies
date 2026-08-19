@@ -75,7 +75,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
 
     return () => {
       entryTl.kill()
-      ScrollTrigger.getAll().forEach((st) => st.kill())
+      scrollTl.kill()
     }
   }, [isPreloaderDone, onGapMeasured])
 
