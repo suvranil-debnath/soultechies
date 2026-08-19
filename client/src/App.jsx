@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef } from 'react'
 import './index.css'
 import Scene from './canvas/Scene'
 import Preloader from './components/Preloader'
+import AboutSection from './components/AboutSection'
 import HeroSection from './components/HeroSection'
 import Navbar from './components/Navbar'
 import { useScrollTimeline } from './hooks/useScrollTimeline'
@@ -41,12 +42,13 @@ function App() {
         registerSnapCallback={(fn) => { sceneSnapRef.current = fn }}
       />
 
-      {/* Layer 1: Scrollable content (hero wordmark etc.) */}
+      {/* Layer 1: Scrollable content (hero wordmark, about us section) */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         <HeroSection
           isPreloaderDone={isPreloaderDone}
           onGapMeasured={handleGapMeasured}
         />
+        <AboutSection isPreloaderDone={isPreloaderDone} />
       </div>
 
       {/* Layer 2: Preloader overlay (highest, removed on complete) */}

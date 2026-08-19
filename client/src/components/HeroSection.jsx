@@ -49,25 +49,25 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
     })
 
     // Scroll-driven Horizontal Wordmark Exit: S drifts strictly LEFT, ULTECHIES drifts strictly RIGHT
-    // Synchronized 100% in lockstep with Black Hole movement starting at top top!
+    // Completes early (by 25% scroll) so text is 100% off-screen before black hole zoom & dissolution!
     const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
         start: 'top top',
-        end: '85% top',
-        scrub: 1.2,
+        end: '25% top',
+        scrub: 1.0,
       },
     })
 
     scrollTl.to(s, {
-      x: '-65vw',
+      x: '-75vw',
       opacity: 0,
       filter: 'blur(10px)',
       ease: 'power2.in',
     }, 0)
 
     scrollTl.to(ultechies, {
-      x: '65vw',
+      x: '75vw',
       opacity: 0,
       filter: 'blur(10px)',
       ease: 'power2.in',
@@ -85,7 +85,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '250vh',
+        height: '350vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}

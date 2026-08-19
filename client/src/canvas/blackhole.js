@@ -110,6 +110,16 @@ export class BlackHoleSimulation {
     this.uniforms.particleDispersion.value = val;
   }
 
+  setDiskBrightness(val) {
+    this.uniforms.diskBrightness.value = val;
+  }
+
+  setMeshVisibility(visible) {
+    if (this.blackHoleMesh) {
+      this.blackHoleMesh.visible = visible;
+    }
+  }
+
   createBlackHole() {
     if (this.blackHoleMesh) {
       this.scene.remove(this.blackHoleMesh);

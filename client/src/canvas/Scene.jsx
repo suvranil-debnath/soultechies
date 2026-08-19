@@ -101,11 +101,17 @@ export const userConfig = {
   "turbulenceSharpness": 8.5
 }
 
+import { TechEarthGroup, createAboutUsTextMesh } from './TechEarth.jsx'
+
 export default function Scene({ isPreloaderDone, registerSnapCallback }) {
   const containerRef = useRef(null)
   const cameraRef = useRef(null)
   const simulationRef = useRef(null)
+  const techEarthRef = useRef(null)
+  const aboutUsTextMeshRef = useRef(null)
+  const bloomPassNodeRef = useRef(null)
   const baseOffsetPx = useRef(0) // pixel translateX after O-gap snap
+  const isIntroComplete = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -126,7 +132,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       0.1,
       1000
     )
-    // Start zoomed in close — inside the black hole for preloader reveal effect
+    // Start zoomed in close — inside the black hole for preloader reveal effect (Frames 1-2)
     camera.position.set(0, 0, 5)
     camera.lookAt(0, 0, 0)
     cameraRef.current = camera
@@ -151,6 +157,17 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
     blackHoleSimulation.createBlackHole()
     simulationRef.current = blackHoleSimulation
 
+    // Holographic Tech Earth Integration (Hidden by default on initial hero screen)
+    const techEarth = new TechEarthGroup({ radius: 2.4 })
+    techEarth.setOpacity(0.0)
+    scene.add(techEarth.group)
+    techEarthRef.current = techEarth
+
+    // 3D "ABOUT US" text mesh placed behind the Earth (Z = -1.8)
+    const aboutUsTextMesh = createAboutUsTextMesh()
+    scene.add(aboutUsTextMesh)
+    aboutUsTextMeshRef.current = aboutUsTextMesh
+
     let postProcessing = null
     let lastFrameTime = performance.now()
 
@@ -164,6 +181,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
       controls.update()
       blackHoleSimulation.update(deltaTime, camera)
+      techEarth.update(deltaTime)
 
       if (postProcessing) {
         postProcessing.render()
@@ -185,6 +203,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       bloomPassNode.radius.value = userConfig.bloomRadius
 
       postProcessing.outputNode = scenePassColor.add(bloomPassNode)
+      bloomPassNodeRef.current = bloomPassNode
       animate()
     }).catch(err => {
       console.warn('WebGPU init failed:', err)
@@ -215,7 +234,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
     }
   }, [])
 
-  // Preloader done → zoom camera out from inside black hole
+  // Preloader done → zoom camera out from inside black hole (Frames 2-4)
   useEffect(() => {
     if (!isPreloaderDone || !cameraRef.current) return
 
@@ -253,6 +272,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           },
           onComplete: () => {
             baseOffsetPx.current = targetNormX
+            isIntroComplete.current = true
           }
         })
 
@@ -267,49 +287,107 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
     }
   }, [isPreloaderDone, registerSnapCallback])
 
-  // Scroll-driven: Black Hole Zoom Trajectory & Particle Dissolution
+  // Scroll-driven Sequential Flow:
+  // Step 1 (0 -> 0.28): Wordmark Exit & Black Hole Zoom / Disappearance
+  // Step 2 (0.28 -> 0.58): Full Size Earth Appears in the Middle (Storyboard Panel 8)
+  // Step 3 (0.58 -> 1.00): Earth Moves to Bottom (~30% Revealed) & About Us Appears
   useEffect(() => {
     if (!isPreloaderDone) return
 
     const st = ScrollTrigger.create({
       trigger: document.body,
       start: 'top top',
-      end: '85% top',
+      end: '100% bottom',
       scrub: 1.2,
       onUpdate: (self) => {
         const sim = simulationRef.current
         const camera = cameraRef.current
+        const techEarth = techEarthRef.current
         if (!sim || !camera) return
 
         const p = self.progress
 
-        // 1. Black Hole Zoom Trajectory:
-        // Phase 1 (p <= 0.25): Dip slightly toward bottom center (y: 0.0 -> -0.2, x: baseOffset -> 0.0)
-        // Phase 2 (p > 0.25): Zoom rapidly into camera lens while drifting toward top (y: -0.2 -> +0.85, z: 27 -> 3.5)
-        let currentX = 0
-        let currentY = 0
-        let targetZ = 27
-
-        if (p <= 0.25) {
-          const t = p / 0.25
-          currentX = baseOffsetPx.current * (1.0 - t)
-          currentY = -0.2 * t
-          targetZ = 27 - t * 5
-        } else {
-          const t = (p - 0.25) / 0.75
-          currentX = 0.15 * t
-          currentY = -0.2 + t * 1.05
-          targetZ = 22 - t * 18.5
+        // Protect intro zoom-out animation if user has not scrolled yet
+        if (!isIntroComplete.current && p < 0.005) {
+          return
         }
 
-        sim.setBlackHoleScreenOffset(currentX, currentY)
-        sim.setBlackHoleAngle(0.488)
-        camera.position.z = targetZ
+        isIntroComplete.current = true
 
-        // 2. Particle Explosion & Accretion Disk Dissolution:
-        // Accretion disk material dissolves into floating stellar particles filling screen
-        const dispersion = Math.max(0, Math.min(1.0, (p - 0.2) / 0.65))
-        sim.setParticleDispersion(dispersion)
+        const aboutMesh = aboutUsTextMeshRef.current
+
+        // 1. Black Hole State & Zoom Trajectory (p: 0.0 -> 0.28)
+        if (p <= 0.28) {
+          if (bloomPassNodeRef.current) {
+            bloomPassNodeRef.current.threshold.value = userConfig.bloomThreshold
+            bloomPassNodeRef.current.strength.value = userConfig.bloomStrength
+          }
+          const t = p / 0.28
+          const currentX = baseOffsetPx.current * (1.0 - t)
+          const currentY = -0.2 * t
+          const targetZ = 27 - t * 23.5 // 27 -> 3.5
+
+          sim.setBlackHoleScreenOffset(currentX, currentY)
+          sim.setBlackHoleAngle(0.488)
+          camera.position.set(0, -0.6 * (1.0 - t), targetZ)
+
+          // Particle dispersion & brightness fade
+          const dispT = Math.max(0, (t - 0.2) / 0.8)
+          sim.setParticleDispersion(dispT)
+          sim.setDiskBrightness(2.0 * (1.0 - dispT))
+          sim.setMeshVisibility(true)
+
+          // Earth and About Us text are completely hidden during black hole zoom
+          if (techEarth) {
+            techEarth.setOpacity(0.0)
+            techEarth.setScale(0.5)
+            techEarth.setPosition(0, 0, 0)
+          }
+          if (aboutMesh) {
+            aboutMesh.material.opacity = 0.0
+          }
+        } else {
+          // p > 0.28: BLACK HOLE IS 100% GONE AND DISAPPEARED!
+          if (bloomPassNodeRef.current) {
+            bloomPassNodeRef.current.threshold.value = 1.05
+            bloomPassNodeRef.current.strength.value = 0.35
+          }
+          sim.setMeshVisibility(false)
+          sim.setDiskBrightness(0.0)
+          sim.setParticleDispersion(1.0)
+
+          // Camera set to standard comfortable 3D viewing distance
+          camera.position.set(0, 0, 6.5)
+
+          // 2. Earth in the Middle (p: 0.28 -> 0.58) — Bigger, prominent full Earth!
+          // 3. Earth moves to bottom (~25-30% revealed) & About Us Text appears behind Earth (p: 0.58 -> 1.00)
+          if (p <= 0.58) {
+            const t = (p - 0.28) / 0.30
+            const opacity = Math.min(1.0, t * 1.5)
+            const scale = 0.7 + Math.min(1.0, t * 1.1) * 0.45 // 0.7 -> 1.15 (bigger Earth in middle!)
+            if (techEarth) {
+              techEarth.setOpacity(opacity)
+              techEarth.setScale(scale)
+              techEarth.setPosition(0, 0, 0)
+            }
+            if (aboutMesh) {
+              aboutMesh.material.opacity = 0.0
+            }
+          } else {
+            const t = (p - 0.58) / 0.42
+            // Descends to the bottom (-4.1), revealing top ~25% curved horizon
+            if (techEarth) {
+              techEarth.setOpacity(1.0)
+              techEarth.setPosition(0, -4.1 * t, 0)
+              techEarth.setScale(1.15 + 0.35 * t) // 1.15 -> 1.50
+            }
+            // "ABOUT US" text sits in 3D BEHIND the Earth at Z = -2.4
+            if (aboutMesh) {
+              aboutMesh.material.opacity = Math.min(1.0, t * 1.5)
+              aboutMesh.position.set(0, -0.3, -2.4)
+            }
+          }
+        }
       }
     })
 
