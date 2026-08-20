@@ -453,28 +453,32 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
             // Stage 4: GTA V Satellite Dive — Earth zooms in & fades to black (p: 0.76 → 0.88)
             const t = (p - 0.76) / 0.12  // 0.0 -> 1.0 over this window
 
-            // Camera plunges: Z 6.5 → 4.5 (never clips through the Earth)
+            // Camera plunges: Z 6.5 → 4.0 (telephoto satellite dive)
             const plungeT = t * t * (3 - 2 * t)  // smoothstep
-            camera.position.set(0, 0, 6.5 - plungeT * 2.0)  // 6.5 → 4.5
+            camera.position.set(0, 0, 6.5 - plungeT * 2.5)  // 6.5 → 4.0
 
-            // Telephoto: 60° → 25° for satellite-lens effect
-            camera.fov = 60.0 - plungeT * 35.0   // 60 → 25
+            // Aggressive telephoto compression: 60° → 14° (main zoom driver)
+            // At 14° FOV the Kolkata region fills the screen like a satellite lens
+            camera.fov = 60.0 - plungeT * 46.0   // 60° → 14°
             camera.updateProjectionMatrix()
 
             if (techEarth) {
               techEarth.setPosition(0, 0, 0)
-              techEarth.setScale(1.0 + plungeT * 0.20)  // 1.0 → 1.2 max — safe from back-bleed
+              // Scale: 1.0 → 1.65 — safe since Earth surface at 1.65 scale = Z 3.96,
+              // camera stops at Z=4.0 (just outside the surface)
+              techEarth.setScale(1.0 + plungeT * 0.65)
               techEarth.setTargetLock(1.0)
               // Reticle: fades quickly
               techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.5))
-              // Earth dissolves from t=0 — back-hemisphere lines never get bright enough to show
-              const earthFade = Math.max(0, 1.0 - Math.pow(t, 0.8))
+              // Hold full opacity until t=0.40, then fade out by t=1.0
+              const earthFade = Math.max(0, 1.0 - Math.pow(Math.max(0, (t - 0.40) / 0.60), 1.2))
               techEarth.setOpacity(earthFade)
               techEarth.setMapOpacity(0.0)
             }
 
             if (aboutMesh) aboutMesh.material.opacity = 0.0
             if (usMesh) usMesh.material.opacity = 0.0
+
 
           } else {
             // Stage 5: Map Burst — Earth gone, map overlay handles reveal (p: 0.88 → 1.00)
