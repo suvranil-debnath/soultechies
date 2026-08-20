@@ -13,36 +13,49 @@ export default function AboutSection({ isPreloaderDone }) {
   useEffect(() => {
     if (!isPreloaderDone || !containerRef.current) return
 
-    // Scroll-driven Reveal: Fades in as Earth moves to the bottom
+    // Scroll-driven Reveal & Exit: Fades in with ABOUT US staging (20% -> 36%)
+    // and disappears in perfect sync when ABOUT and US split & exit (38% -> 56%)
     const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
-        start: '55% top',
-        end: '85% top',
+        start: '20% top',
+        end: '56% top',
         scrub: 1.0,
       },
     })
 
-    // Animate container and text elements
+    // 1. Fade in during initial staging (20% -> 36%)
     scrollTl.fromTo(
       containerRef.current,
       { opacity: 0, pointerEvents: 'none' },
-      { opacity: 1, pointerEvents: 'auto', ease: 'none' },
+      { opacity: 1, pointerEvents: 'auto', duration: 0.4, ease: 'power2.out' },
       0
     )
 
     scrollTl.fromTo(
       [leftColRef.current, rightColRef.current],
-      { y: 40, opacity: 0 },
-      { y: 0, opacity: 1, ease: 'power2.out' },
-      0.1
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' },
+      0
     )
 
-    scrollTl.fromTo(
-      titleRef.current,
-      { y: 60, scale: 0.95, opacity: 0 },
-      { y: 0, scale: 1, opacity: 1, ease: 'power2.out' },
-      0.15
+    // 2. Disappear in perfect sync with "ABOUT" & "US" split (38% -> 56%)
+    scrollTl.to(
+      leftColRef.current,
+      { x: -50, y: -20, opacity: 0, duration: 0.45, ease: 'power2.in' },
+      0.55
+    )
+
+    scrollTl.to(
+      rightColRef.current,
+      { x: 50, y: -20, opacity: 0, duration: 0.45, ease: 'power2.in' },
+      0.55
+    )
+
+    scrollTl.to(
+      containerRef.current,
+      { opacity: 0, pointerEvents: 'none', duration: 0.45, ease: 'power2.in' },
+      0.55
     )
 
     return () => {

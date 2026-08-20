@@ -49,12 +49,12 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
     })
 
     // Scroll-driven Horizontal Wordmark Exit: S drifts strictly LEFT, ULTECHIES drifts strictly RIGHT
-    // Completes early (by 25% scroll) so text is 100% off-screen before black hole zoom & dissolution!
+    // Completes early (by 18% scroll) so text is 100% off-screen before black hole zoom & dissolution!
     const scrollTl = gsap.timeline({
       scrollTrigger: {
         trigger: document.body,
         start: 'top top',
-        end: '25% top',
+        end: '18% top',
         scrub: 1.0,
       },
     })
@@ -85,7 +85,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '350vh',
+        height: '500vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}

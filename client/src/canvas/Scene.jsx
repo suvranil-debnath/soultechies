@@ -101,14 +101,15 @@ export const userConfig = {
   "turbulenceSharpness": 8.5
 }
 
-import { TechEarthGroup, createAboutUsTextMesh } from './TechEarth.jsx'
+import { TechEarthGroup, createAboutTextMesh, createUsTextMesh } from './TechEarth.jsx'
 
 export default function Scene({ isPreloaderDone, registerSnapCallback }) {
   const containerRef = useRef(null)
   const cameraRef = useRef(null)
   const simulationRef = useRef(null)
   const techEarthRef = useRef(null)
-  const aboutUsTextMeshRef = useRef(null)
+  const aboutTextMeshRef = useRef(null)
+  const usTextMeshRef = useRef(null)
   const bloomPassNodeRef = useRef(null)
   const aboutUsBaseY = useRef(-0.3)
   const baseOffsetPx = useRef(0) // pixel translateX after O-gap snap
@@ -164,10 +165,13 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
     scene.add(techEarth.group)
     techEarthRef.current = techEarth
 
-    // 3D "ABOUT US" text mesh placed behind the Earth (Z = -1.8)
-    const aboutUsTextMesh = createAboutUsTextMesh()
-    scene.add(aboutUsTextMesh)
-    aboutUsTextMeshRef.current = aboutUsTextMesh
+    // 3D Split "ABOUT" & "US" text meshes placed behind the Earth (Z = -2.4)
+    const aboutMesh = createAboutTextMesh()
+    const usMesh = createUsTextMesh()
+    scene.add(aboutMesh)
+    scene.add(usMesh)
+    aboutTextMeshRef.current = aboutMesh
+    usTextMeshRef.current = usMesh
 
     let postProcessing = null
     let lastFrameTime = performance.now()
@@ -184,11 +188,14 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       blackHoleSimulation.update(deltaTime, camera)
       techEarth.update(deltaTime)
 
-      // Subtle weightless breathing float on About Us text when revealed
-      if (aboutUsTextMeshRef.current && aboutUsTextMeshRef.current.material.opacity > 0.05) {
+      // Subtle weightless breathing float on About & Us text when revealed
+      if (aboutTextMeshRef.current && aboutTextMeshRef.current.material.opacity > 0.05) {
         const time = currentTime * 0.001
-        aboutUsTextMeshRef.current.position.y = aboutUsBaseY.current + Math.sin(time * 1.5) * 0.025
-        aboutUsTextMeshRef.current.position.x = Math.cos(time * 1.0) * 0.015
+        const floatY = Math.sin(time * 1.5) * 0.02
+        aboutTextMeshRef.current.position.y = aboutUsBaseY.current + floatY
+        if (usTextMeshRef.current) {
+          usTextMeshRef.current.position.y = aboutUsBaseY.current + floatY
+        }
       }
 
       if (postProcessing) {
@@ -322,15 +329,16 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
         isIntroComplete.current = true
 
-        const aboutMesh = aboutUsTextMeshRef.current
+        const aboutMesh = aboutTextMeshRef.current
+        const usMesh = usTextMeshRef.current
 
-        // 1. Black Hole State & Zoom Trajectory (p: 0.0 -> 0.28)
-        if (p <= 0.28) {
+        // Stage 0: Black Hole Zoom & Dissolution (p: 0.00 -> 0.20)
+        if (p <= 0.20) {
           if (bloomPassNodeRef.current) {
             bloomPassNodeRef.current.threshold.value = userConfig.bloomThreshold
             bloomPassNodeRef.current.strength.value = userConfig.bloomStrength
           }
-          const t = p / 0.28
+          const t = p / 0.20
           const currentX = baseOffsetPx.current * (1.0 - t)
           const currentY = -0.2 * t
           const targetZ = 27 - t * 23.5 // 27 -> 3.5
@@ -338,6 +346,8 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           sim.setBlackHoleScreenOffset(currentX, currentY)
           sim.setBlackHoleAngle(0.488)
           camera.position.set(0, -0.6 * (1.0 - t), targetZ)
+          camera.fov = 60
+          camera.updateProjectionMatrix()
 
           // Particle dispersion & brightness fade
           const dispT = Math.max(0, (t - 0.2) / 0.8)
@@ -345,17 +355,19 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           sim.setDiskBrightness(2.0 * (1.0 - dispT))
           sim.setMeshVisibility(true)
 
-          // Earth and About Us text are completely hidden during black hole zoom
+          // Earth and text are completely hidden during black hole zoom
           if (techEarth) {
             techEarth.setOpacity(0.0)
             techEarth.setScale(0.5)
             techEarth.setPosition(0, 0, 0)
+            techEarth.setTargetLock(0.0)
+            techEarth.setPinpointOpacity(0.0)
+            techEarth.setMapOpacity(0.0)
           }
-          if (aboutMesh) {
-            aboutMesh.material.opacity = 0.0
-          }
+          if (aboutMesh) aboutMesh.material.opacity = 0.0
+          if (usMesh) usMesh.material.opacity = 0.0
         } else {
-          // p > 0.28: BLACK HOLE IS 100% GONE AND DISAPPEARED!
+          // p > 0.20: BLACK HOLE IS 100% GONE AND DISAPPEARED!
           if (bloomPassNodeRef.current) {
             bloomPassNodeRef.current.threshold.value = 1.05
             bloomPassNodeRef.current.strength.value = 0.35
@@ -364,43 +376,109 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           sim.setDiskBrightness(0.0)
           sim.setParticleDispersion(1.0)
 
-          // Camera set to standard comfortable 3D viewing distance
-          camera.position.set(0, 0, 6.5)
+          if (p <= 0.38) {
+            // Stage 1: Initial Staging — Earth in Lower-Third with "ABOUT" and "US" (p: 0.20 -> 0.38)
+            const t = (p - 0.20) / 0.18
+            camera.position.set(0, 0, 6.5)
+            camera.fov = 60
+            camera.updateProjectionMatrix()
 
-          // 2. Earth in the Middle (p: 0.28 -> 0.58) — Bigger, prominent full Earth!
-          // 3. Earth moves to bottom (~25-30% revealed) & About Us Text appears behind Earth (p: 0.58 -> 1.00)
-          if (p <= 0.58) {
-            const t = (p - 0.28) / 0.30
-            const opacity = Math.min(1.0, t * 1.5)
-            const scale = 0.7 + Math.min(1.0, t * 1.1) * 0.45 // 0.7 -> 1.15 (bigger Earth in middle!)
             if (techEarth) {
-              techEarth.setOpacity(opacity)
-              techEarth.setScale(scale)
-              techEarth.setPosition(0, 0, 0)
-            }
-            if (aboutMesh) {
-              aboutMesh.material.opacity = 0.0
-            }
-          } else {
-            const t = (p - 0.58) / 0.42
-            // Descends to the bottom (-4.1), revealing top ~25% curved horizon
-            if (techEarth) {
-              techEarth.setOpacity(1.0)
               techEarth.setPosition(0, -4.1 * t, 0)
-              techEarth.setScale(1.15 + 0.35 * t) // 1.15 -> 1.50
+              techEarth.setScale(0.8 + 0.55 * t) // 0.8 -> 1.35
+              techEarth.setOpacity(Math.min(1.0, t * 1.5))
+              techEarth.setTargetLock(0.0) // Continuous free rotation
+              techEarth.setPinpointOpacity(0.0)
+              techEarth.setMapOpacity(0.0)
             }
-            // "ABOUT US" text rises gracefully from behind the Earth with subtle depth glide & scale
-            if (aboutMesh) {
-              const easeT = Math.sin(t * Math.PI * 0.5) // Smooth ease-out sine
-              const targetY = -0.70 + 0.40 * easeT     // Rises upward from -0.70 to -0.30
-              const targetZ = -2.80 + 0.40 * easeT     // Glides forward from -2.80 to -2.40
-              const targetScale = 0.92 + 0.08 * easeT  // Subtly elevates scale 0.92 -> 1.0
 
-              aboutUsBaseY.current = targetY
-              aboutMesh.position.set(0, targetY, targetZ)
-              aboutMesh.scale.set(targetScale, targetScale, 1.0)
-              aboutMesh.material.opacity = Math.min(1.0, Math.pow(t, 1.2) * 1.4)
+            if (aboutMesh) {
+              aboutMesh.position.set(-3.8, -0.3, -2.4)
+              aboutMesh.material.opacity = Math.min(1.0, t * 1.5)
             }
+            if (usMesh) {
+              usMesh.position.set(4.2, -0.3, -2.4)
+              usMesh.material.opacity = Math.min(1.0, t * 1.5)
+            }
+          } else if (p <= 0.58) {
+            // Stage 2 (Step 1): Text Split & Earth Centering (p: 0.38 -> 0.58)
+            const t = (p - 0.38) / 0.20
+            camera.position.set(0, 0, 6.5)
+            camera.fov = 60
+            camera.updateProjectionMatrix()
+
+            // Earth translates from bottom to exact center
+            if (techEarth) {
+              const earthY = -4.1 * (1.0 - t)
+              const earthScale = 1.35 - 0.35 * t // 1.35 -> 1.0
+              techEarth.setPosition(0, earthY, 0)
+              techEarth.setScale(earthScale)
+              techEarth.setOpacity(1.0)
+              techEarth.setTargetLock(0.0) // Continues unbroken natural rotation
+              techEarth.setPinpointOpacity(0.0)
+              techEarth.setMapOpacity(0.0)
+            }
+
+            // "ABOUT" slides left, "US" slides right
+            const easeT = t * t
+            const textOpacity = Math.max(0, 1.0 - t * 1.6)
+
+            if (aboutMesh) {
+              aboutMesh.position.set(-3.8 - easeT * 20.0, -0.3, -2.4)
+              aboutMesh.material.opacity = textOpacity
+            }
+            if (usMesh) {
+              usMesh.position.set(4.2 + easeT * 20.0, -0.3, -2.4)
+              usMesh.material.opacity = textOpacity
+            }
+          } else if (p <= 0.76) {
+            // Stage 3 (Step 2): Continuous Spin to Kolkata Target Lock (p: 0.58 -> 0.76)
+            const t = (p - 0.58) / 0.18
+            camera.position.set(0, 0, 6.5)
+            camera.fov = 60
+            camera.updateProjectionMatrix()
+
+            if (techEarth) {
+              techEarth.setPosition(0, 0, 0)
+              techEarth.setScale(1.0)
+              techEarth.setOpacity(1.0)
+              techEarth.setTargetLock(t) // Decelerates & snaps Kolkata to face camera lens
+              techEarth.setPinpointOpacity(Math.max(0, (t - 0.25) / 0.75))
+              techEarth.setMapOpacity(0.0)
+            }
+
+            if (aboutMesh) aboutMesh.material.opacity = 0.0
+            if (usMesh) usMesh.material.opacity = 0.0
+          } else {
+            // Stage 4 (Step 3): GTA V Satellite Dive + Map Reveal (p: 0.76 -> 1.00)
+            const t = (p - 0.76) / 0.24
+
+            // Dive: camera plunges forward (Z: 6.5 -> 4.0) with telephoto FOV compression
+            // Capped at Z=4.0 so we never clip through the Earth surface (radius 2.4 * max scale 1.6 = 3.84)
+            const plungeT = Math.pow(Math.min(t, 1.0), 1.6)
+            const camZ = 6.5 - plungeT * 2.5   // 6.5 -> 4.0 max
+            camera.position.set(0, 0, camZ)
+
+            // Telephoto compression: 60deg -> 22deg (keeps Kolkata area large without zooming past the globe)
+            const fovT = Math.pow(Math.min(t, 1.0), 1.4)
+            camera.fov = 60.0 - fovT * 38.0    // 60 -> 22 deg
+            camera.updateProjectionMatrix()
+
+            if (techEarth) {
+              techEarth.setPosition(0, 0, 0)
+              // Scale: 1.0 -> max 1.6 (surface stays in FRONT of camera the whole time)
+              techEarth.setScale(1.0 + Math.min(t, 1.0) * 0.6)
+              techEarth.setTargetLock(1.0)
+              // Reticle fades quickly
+              techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.5))
+              // Earth opacity fades out: starts at t=0.4, fully gone by t=0.75
+              const earthFade = Math.max(0, Math.min(1, (0.75 - t) / 0.35))
+              techEarth.setOpacity(earthFade)
+              techEarth.setMapOpacity(0.0)
+            }
+
+            if (aboutMesh) aboutMesh.material.opacity = 0.0
+            if (usMesh) usMesh.material.opacity = 0.0
           }
         }
       }

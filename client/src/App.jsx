@@ -5,6 +5,7 @@ import Scene from './canvas/Scene'
 import Preloader from './components/Preloader'
 import AboutSection from './components/AboutSection'
 import HeroSection from './components/HeroSection'
+import KolkataMapOverlay from './components/KolkataMapOverlay'
 import Navbar from './components/Navbar'
 import { useScrollTimeline } from './hooks/useScrollTimeline'
 
@@ -64,6 +65,7 @@ function App() {
           onGapMeasured={handleGapMeasured}
         />
         <AboutSection isPreloaderDone={isPreloaderDone} />
+        <KolkataMapOverlay isPreloaderDone={isPreloaderDone} />
       </div>
 
       {/* Layer 2: Preloader overlay (highest, removed on complete) */}

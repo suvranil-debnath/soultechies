@@ -46,13 +46,12 @@ const FresnelAtmosphereShader = {
 }
 
 /**
- * Create 3D text mesh for "ABOUT US" positioned behind the Earth sphere
- * Exact design matching reference image (Geometric Sans, weight 500, clean matte finish with zero glow)
+ * Create 3D text mesh for "ABOUT" positioned behind the left Earth curvature
  */
-export function createAboutUsTextMesh() {
+export function createAboutTextMesh() {
   const canvas = document.createElement('canvas')
-  canvas.width = 4096
-  canvas.height = 1200
+  canvas.width = 2048
+  canvas.height = 1024
   const ctx = canvas.getContext('2d')
 
   ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -61,13 +60,12 @@ export function createAboutUsTextMesh() {
   ctx.font = '500 380px "Outfit", "Plus Jakarta Sans", sans-serif'
   ctx.letterSpacing = '-0.01em'
   ctx.fillStyle = '#ffffff'
-  ctx.fillText('ABOUT US', canvas.width / 2, canvas.height / 2)
+  ctx.fillText('ABOUT', canvas.width / 2, canvas.height / 2)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true
 
-  // Refined plane geometry spanning across the viewport
-  const geometry = new THREE.PlaneGeometry(23.5, 6.8)
+  const geometry = new THREE.PlaneGeometry(12.0, 6.0)
   const material = new THREE.MeshBasicMaterial({
     map: texture,
     transparent: true,
@@ -77,10 +75,53 @@ export function createAboutUsTextMesh() {
   })
 
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(0, -0.3, -2.4) // Positioned in 3D behind the Earth sphere
-  mesh.renderOrder = 0 // Rendered in background behind the Earth
-  mesh.name = 'AboutUsTextMesh'
+  mesh.position.set(-3.8, -0.3, -2.4)
+  mesh.renderOrder = 0
+  mesh.name = 'AboutTextMesh'
   return mesh
+}
+
+/**
+ * Create 3D text mesh for "US" positioned behind the right Earth curvature
+ */
+export function createUsTextMesh() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1536
+  canvas.height = 1024
+  const ctx = canvas.getContext('2d')
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = '500 380px "Outfit", "Plus Jakarta Sans", sans-serif'
+  ctx.letterSpacing = '-0.01em'
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText('US', canvas.width / 2, canvas.height / 2)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.needsUpdate = true
+
+  const geometry = new THREE.PlaneGeometry(9.0, 6.0)
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    opacity: 0.0,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  })
+
+  const mesh = new THREE.Mesh(geometry, material)
+  mesh.position.set(4.2, -0.3, -2.4)
+  mesh.renderOrder = 0
+  mesh.name = 'UsTextMesh'
+  return mesh
+}
+
+/**
+ * Backward compatibility alias for single mesh if needed
+ */
+export function createAboutUsTextMesh() {
+  return createAboutTextMesh()
 }
 
 /**
@@ -88,7 +129,7 @@ export function createAboutUsTextMesh() {
  */
 export class TechEarthGroup {
   constructor(options = {}) {
-    this.radius = options.radius ?? 2.4 // Increased Earth size
+    this.radius = options.radius ?? 2.4 // Base Earth size
     this.group = new THREE.Group()
     this.group.name = 'TechEarthGroup'
 
@@ -96,9 +137,17 @@ export class TechEarthGroup {
     this.landmesh = null
     this.pointsMesh = null
     this.glowMesh = null
+    this.kolkataMarker = null
+    this.mapPlane = null
+
+    this.freeSpinAngle = 0
+    this.lockProgress = 0 // 0.0 = free spin, 1.0 = locked on Kolkata
+    this.kolkataPos = latLonToVector3(22.5726, 88.3639, this.radius)
 
     this.initInnerCore()
     this.initAtmosphere()
+    this.initKolkataMarker()
+    this.initKolkataMapPlane()
     this.loadLandmassOutlines()
     this.loadDotMatrixPoints()
 
@@ -120,6 +169,104 @@ export class TechEarthGroup {
     this.innerCore = new THREE.Mesh(geometry, material)
     this.innerCore.renderOrder = 1
     this.group.add(this.innerCore)
+  }
+
+  /**
+   * Holographic Pinpoint Marker on Kolkata [22.5726° N, 88.3639° E]
+   */
+  initKolkataMarker() {
+    const markerGroup = new THREE.Group()
+    markerGroup.name = 'KolkataMarker'
+
+    // 1. Delicate Pinpoint Core Dot
+    const dotGeo = new THREE.SphereGeometry(0.012, 16, 16)
+    const dotMat = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.9,
+    })
+    const dotMesh = new THREE.Mesh(dotGeo, dotMat)
+    markerGroup.add(dotMesh)
+
+    // 2. Ultra-Thin Hairline Concentric Target Rings (64 segments, 0.003 thickness)
+    const ringGeo = new THREE.RingGeometry(0.068, 0.071, 64)
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.75,
+      side: THREE.DoubleSide,
+    })
+    this.markerRing = new THREE.Mesh(ringGeo, ringMat)
+    markerGroup.add(this.markerRing)
+
+    const outerRingGeo = new THREE.RingGeometry(0.128, 0.131, 64)
+    const outerRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide,
+    })
+    this.markerOuterRing = new THREE.Mesh(outerRingGeo, outerRingMat)
+    markerGroup.add(this.markerOuterRing)
+
+    // 3. Holographic HUD Canvas Label
+    const labelCanvas = document.createElement('canvas')
+    labelCanvas.width = 1024
+    labelCanvas.height = 256
+    const lctx = labelCanvas.getContext('2d')
+    lctx.clearRect(0, 0, labelCanvas.width, labelCanvas.height)
+    lctx.font = '600 52px "Space Grotesk", sans-serif'
+    lctx.fillStyle = '#00f0ff'
+    lctx.fillText('TARGET // KOLKATA', 40, 80)
+    lctx.font = '400 36px "Space Grotesk", monospace'
+    lctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+    lctx.fillText('LAT 22.5726° N  |  LON 88.3639° E', 40, 140)
+
+    const labelTex = new THREE.CanvasTexture(labelCanvas)
+    const labelGeo = new THREE.PlaneGeometry(1.2, 0.3)
+    const labelMat = new THREE.MeshBasicMaterial({
+      map: labelTex,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide,
+    })
+    const labelMesh = new THREE.Mesh(labelGeo, labelMat)
+    labelMesh.position.set(0.7, 0.25, 0)
+    markerGroup.add(labelMesh)
+
+    // Position marker at Kolkata coordinate on sphere surface
+    markerGroup.position.copy(this.kolkataPos.clone().multiplyScalar(1.015))
+    markerGroup.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      this.kolkataPos.clone().normalize()
+    )
+
+    this.kolkataMarker = markerGroup
+    this.kolkataMarker.visible = false
+    this.group.add(this.kolkataMarker)
+  }
+
+  /**
+   * Kolkata Street Map Texture Overlay for GTA V Satellite Arrival
+   */
+  initKolkataMapPlane() {
+    const loader = new THREE.TextureLoader()
+    loader.load('/textures/kolkata-map.png', (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      const geo = new THREE.PlaneGeometry(8.0, 4.5)
+      const mat = new THREE.MeshBasicMaterial({
+        map: tex,
+        transparent: true,
+        opacity: 0.0,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      })
+      this.mapPlane = new THREE.Mesh(geo, mat)
+      this.mapPlane.position.set(0, 0, 2.35)
+      this.mapPlane.name = 'KolkataMapPlane'
+      this.mapPlane.visible = false
+      this.group.add(this.mapPlane)
+    })
   }
 
   /**
@@ -304,11 +451,90 @@ export class TechEarthGroup {
   }
 
   /**
-   * Update continuous slow Y-axis rotation
+   * Target Lock: 0.0 = continuous free spin, 1.0 = locked on Kolkata facing camera
+   */
+  setTargetLock(lockProgress) {
+    this.lockProgress = Math.max(0, Math.min(1, lockProgress))
+    
+    // Direction vector of Kolkata on unit sphere
+    const kolkataUnit = this.kolkataPos.clone().normalize()
+    
+    // Exact quaternion that maps Kolkata directly to (0, 0, 1) towards camera
+    const targetQuat = new THREE.Quaternion().setFromUnitVectors(
+      kolkataUnit,
+      new THREE.Vector3(0, 0, 1)
+    )
+
+    // Current free spin quaternion around Y axis
+    const freeQuat = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      this.freeSpinAngle
+    )
+
+    const ease = (t) => t * t * (3 - 2 * t) // smoothstep
+    const t = ease(this.lockProgress)
+
+    // Mathematically exact spherical interpolation into dead-center Kolkata orientation
+    this.group.quaternion.slerpQuaternions(freeQuat, targetQuat, t)
+  }
+
+  /**
+   * Set opacity of the Kolkata holographic target reticle
+   */
+  setPinpointOpacity(val) {
+    if (!this.kolkataMarker) return
+    this.kolkataMarker.visible = val > 0.01
+    this.kolkataMarker.traverse((child) => {
+      if (child.material) {
+        child.material.opacity = val
+      }
+    })
+  }
+
+  /**
+   * Set opacity of the Kolkata street map texture plane
+   */
+  setMapOpacity(val) {
+    if (!this.mapPlane) return
+    this.mapPlane.visible = val > 0.01
+    if (this.mapPlane.material) {
+      this.mapPlane.material.opacity = val
+    }
+  }
+
+  /**
+   * Set scale of the Kolkata street map plane
+   */
+  setMapScale(s) {
+    if (!this.mapPlane) return
+    this.mapPlane.scale.set(s, s, 1)
+  }
+
+  /**
+   * Update continuous rotation, target ring spin, and pulse
    */
   update(delta = 0.016) {
-    if (this.group) {
-      this.group.rotation.y += 0.003
+    const time = performance.now() * 0.001
+
+    // Free spin advances only when not fully locked
+    if (this.lockProgress < 0.999) {
+      this.freeSpinAngle += 0.004 * (1.0 - this.lockProgress)
+      if (this.lockProgress <= 0.001) {
+        this.group.quaternion.setFromAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          this.freeSpinAngle
+        )
+      }
+    }
+
+    // Animate Kolkata reticle rings
+    if (this.markerRing) {
+      this.markerRing.rotation.z = time * 2.0
+    }
+    if (this.markerOuterRing) {
+      this.markerOuterRing.rotation.z = -time * 1.5
+      const pulse = 1.0 + Math.sin(time * 6.0) * 0.08
+      this.markerOuterRing.scale.set(pulse, pulse, 1)
     }
   }
 
