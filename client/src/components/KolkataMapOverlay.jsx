@@ -31,38 +31,44 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         if (p < MAP_START) {
           el.style.opacity       = '0'
           el.style.pointerEvents = 'none'
-          // Reset to hidden pinpoint state
           img.style.opacity      = '0'
           img.style.transform    = 'scale(0.28)'
           img.style.filter       = 'blur(12px) brightness(2.5)'
-          img.style.maskImage         = 'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)'
-          img.style.webkitMaskImage   = img.style.maskImage
+          // Tight initial pinpoint mask
+          const initMask = 'radial-gradient(ellipse 18% 14% at 50% 50%, black 0%, black 30%, transparent 100%)'
+          img.style.maskImage        = initMask
+          img.style.webkitMaskImage  = initMask
           return
         }
 
         const t     = (p - MAP_START) / (MAP_END - MAP_START)
-        const eased = 1 - Math.pow(1 - t, 2.8)   // ease-out — slightly less aggressive
+        const eased = 1 - Math.pow(1 - t, 2.8)
 
         // ── Container fade-in
         el.style.opacity       = eased.toFixed(4)
         el.style.pointerEvents = t > 0.3 ? 'auto' : 'none'
 
-        // ── Image: starts at 0.28 (clearly visible) and expands to 1.0
+        // ── Image scale + blur-to-sharp
         const imgScale   = 0.28 + eased * 0.72   // 0.28 → 1.0
-        const blur       = (1 - eased) * 10        // 10px → 0px
-        const brightness = 1 + (1 - eased) * 1.5  // 2.5 → 1.0
+        const blur       = (1 - eased) * 10
+        const brightness = 1 + (1 - eased) * 1.5
 
         img.style.transform = `scale(${imgScale.toFixed(4)})`
         img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`
-        img.style.opacity   = Math.min(1, t * 2.5).toFixed(4)   // quick fade-in
+        img.style.opacity   = Math.min(1, t * 2.5).toFixed(4)
 
-        // ── Radial gradient mask applied DIRECTLY to the image
-        //    so it clips the image's own rectangular background, not an outer wrapper.
-        //    Ellipse expands: 30%×25% → 100%×85%
-        //    Soft falloff zone is always 55%→100% of the ellipse (smooth blend into black)
-        const rx   = 30  + eased * 70    // 30%  → 100% (horizontal radius)
-        const ry   = 25  + eased * 60    // 25%  → 85%  (vertical — map is landscape)
-        const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 55%, transparent 100%)`
+        // ── Radial gradient mask — directly on the img so it clips the map's
+        //    own rectangular background, not an outer wrapper.
+        //
+        //    Key design: soft zone spans 30%→100% of the ellipse (70% of radius
+        //    is a gradient fade). This creates a wide, feathered edge that
+        //    always melts into the black background — even at full size.
+        //
+        //    Final ellipse is capped at 85%×68% (not 100%) so there is ALWAYS
+        //    a visible vignette blending the corners into black.
+        const rx   = 18 + eased * 67    // 18% → 85%
+        const ry   = 14 + eased * 54    // 14% → 68%  (landscape aspect)
+        const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 0%, black 30%, transparent 100%)`
         img.style.maskImage        = mask
         img.style.webkitMaskImage  = mask
       },
@@ -103,9 +109,9 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           transformOrigin: '50% 50%',
           filter:          'blur(12px) brightness(2.5)',
           opacity:         0,
-          // Initial mask — tight ellipse, edges completely fade to black
-          maskImage:       'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)',
+          // Initial mask: tight pinpoint, hard center fades to transparent
+          maskImage:       'radial-gradient(ellipse 18% 14% at 50% 50%, black 0%, black 30%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 18% 14% at 50% 50%, black 0%, black 30%, transparent 100%)',
         }}
       />
     </div>
