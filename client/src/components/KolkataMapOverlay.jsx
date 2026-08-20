@@ -6,14 +6,14 @@ gsap.registerPlugin(ScrollTrigger)
 
 export default function KolkataMapOverlay({ isPreloaderDone }) {
   const containerRef = useRef(null)
-  const mapImageRef = useRef(null)
+  const mapImageRef  = useRef(null)
 
   useEffect(() => {
     if (!isPreloaderDone || !containerRef.current) return
 
-    // Perfectly synced with Scene.jsx:
-    //   p < 0.88  → hidden (Earth is diving)
-    //   p 0.88→1.0 → map bursts from center (iris / portal open from Kolkata dot)
+    // Synced with Scene.jsx:
+    //   p < 0.88  → hidden (Earth diving / fading)
+    //   p 0.88→1.0 → map iris-bursts from center, edges always blend into black
     const MAP_START = 0.88
     const MAP_END   = 1.00
 
@@ -23,7 +23,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
       end: 'bottom bottom',
       scrub: true,
       onUpdate: (self) => {
-        const p = self.progress
+        const p   = self.progress
         const el  = containerRef.current
         const img = mapImageRef.current
         if (!el || !img) return
@@ -31,30 +31,40 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         if (p < MAP_START) {
           el.style.opacity       = '0'
           el.style.pointerEvents = 'none'
-          img.style.transform    = 'scale(0.04)'
-          img.style.filter       = 'blur(16px) brightness(3)'
+          // Reset to hidden pinpoint state
           img.style.opacity      = '0'
+          img.style.transform    = 'scale(0.28)'
+          img.style.filter       = 'blur(12px) brightness(2.5)'
+          img.style.maskImage         = 'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)'
+          img.style.webkitMaskImage   = img.style.maskImage
           return
         }
 
-        // t: 0→1 over the map burst window
-        const t = (p - MAP_START) / (MAP_END - MAP_START)
-        // Cubic ease-out — fast start, settles into full frame
-        const eased = 1 - Math.pow(1 - t, 3)
+        const t     = (p - MAP_START) / (MAP_END - MAP_START)
+        const eased = 1 - Math.pow(1 - t, 2.8)   // ease-out — slightly less aggressive
 
-        // Container
+        // ── Container fade-in
         el.style.opacity       = eased.toFixed(4)
-        el.style.pointerEvents = t > 0.4 ? 'auto' : 'none'
+        el.style.pointerEvents = t > 0.3 ? 'auto' : 'none'
 
-        // Map iris-burst: scale from pinpoint (0.04) at screen center to full frame (1.0)
-        const scale      = 0.04 + eased * 0.96   // 0.04 → 1.0
-        const blur       = (1 - eased) * 14       // 14px → 0px
-        const brightness = 1 + (1 - eased) * 2.0  // 3.0 → 1.0
+        // ── Image: starts at 0.28 (clearly visible) and expands to 1.0
+        const imgScale   = 0.28 + eased * 0.72   // 0.28 → 1.0
+        const blur       = (1 - eased) * 10        // 10px → 0px
+        const brightness = 1 + (1 - eased) * 1.5  // 2.5 → 1.0
 
-        img.style.transform = `scale(${scale.toFixed(4)})`
+        img.style.transform = `scale(${imgScale.toFixed(4)})`
         img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`
-        // Opacity: fast 0→1 in the first half of the burst
-        img.style.opacity   = Math.min(1, t * 2).toFixed(4)
+        img.style.opacity   = Math.min(1, t * 2.5).toFixed(4)   // quick fade-in
+
+        // ── Radial gradient mask applied DIRECTLY to the image
+        //    so it clips the image's own rectangular background, not an outer wrapper.
+        //    Ellipse expands: 30%×25% → 100%×85%
+        //    Soft falloff zone is always 55%→100% of the ellipse (smooth blend into black)
+        const rx   = 30  + eased * 70    // 30%  → 100% (horizontal radius)
+        const ry   = 25  + eased * 60    // 25%  → 85%  (vertical — map is landscape)
+        const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 55%, transparent 100%)`
+        img.style.maskImage        = mask
+        img.style.webkitMaskImage  = mask
       },
     })
 
@@ -70,7 +80,6 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         zIndex:         11,
         pointerEvents:  'none',
         opacity:        0,
-        // Transparent so the black 3D canvas shows through during Earth fade
         background:     'transparent',
         display:        'flex',
         alignItems:     'center',
@@ -78,7 +87,6 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         overflow:       'hidden',
       }}
     >
-      {/* Map starts as a tiny pinpoint at screen center (where Kolkata target was) */}
       <img
         ref={mapImageRef}
         src="/textures/kolkata-map.png"
@@ -90,13 +98,17 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           maxWidth:        '100%',
           maxHeight:       '100%',
           display:         'block',
-          willChange:      'transform, filter, opacity',
-          transform:       'scale(0.04)',
+          willChange:      'transform, filter, opacity, mask-image',
+          transform:       'scale(0.28)',
           transformOrigin: '50% 50%',
-          filter:          'blur(16px) brightness(3)',
+          filter:          'blur(12px) brightness(2.5)',
           opacity:         0,
+          // Initial mask — tight ellipse, edges completely fade to black
+          maskImage:       'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 30% 25% at 50% 50%, black 55%, transparent 100%)',
         }}
       />
     </div>
   )
 }
+

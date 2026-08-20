@@ -156,14 +156,17 @@ export class TechEarthGroup {
   }
 
   /**
-   * Opaque black inner sphere with depthWrite: true to block objects behind the Earth
+   * Opaque black inner sphere with depthWrite: true to block objects behind the Earth.
+   * DoubleSide ensures back-hemisphere faces also write to the depth buffer,
+   * which prevents landmass lines on the opposite side of the globe from bleeding through.
    */
   initInnerCore() {
     const geometry = new THREE.SphereGeometry(this.radius * 0.992, 64, 64)
     const material = new THREE.MeshBasicMaterial({
       color: 0x000000,
       depthWrite: true,
-      transparent: false, // Opaque queue so it writes to depth buffer and blocks behind-earth objects!
+      transparent: false,
+      side: THREE.DoubleSide,  // KEY FIX: back-hemisphere faces now write depth, blocking behind-earth geometry
     })
 
     this.innerCore = new THREE.Mesh(geometry, material)
@@ -318,6 +321,8 @@ export class TechEarthGroup {
         transparent: true,
         opacity: 0.85,
         blending: THREE.AdditiveBlending,
+        depthTest: true,   // Explicitly test depth so back-hemisphere lines are discarded
+        depthWrite: false, // Lines are transparent — don't write depth themselves
       })
 
       this.landmesh = new THREE.LineSegments(geometry, material)
@@ -418,7 +423,10 @@ export class TechEarthGroup {
     this.group.visible = val > 0.001
     if (this.innerCore && this.innerCore.material) {
       this.innerCore.material.opacity = val
-      this.innerCore.material.depthWrite = val > 0.1
+      // Keep depthWrite ALWAYS true — the inner core must permanently occlude
+      // back-hemisphere geometry even while the Earth is fading out.
+      // Disabling depthWrite at low opacity causes back-side land lines to bleed through.
+      this.innerCore.material.depthWrite = true
     }
     if (this.landmesh && this.landmesh.material) {
       this.landmesh.material.opacity = 0.85 * val

@@ -463,18 +463,19 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
             if (techEarth) {
               techEarth.setPosition(0, 0, 0)
-              techEarth.setScale(1.0 + plungeT * 0.55)  // 1.0 → 1.55 max
+              techEarth.setScale(1.0 + plungeT * 0.20)  // 1.0 → 1.2 max — safe from back-bleed
               techEarth.setTargetLock(1.0)
-              // Reticle: visible early, gone by t=0.5
-              techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.0))
-              // Earth body: full opacity until t=0.35, then rapidly fades to 0 by t=1.0
-              const earthFade = Math.max(0, 1.0 - Math.pow(Math.max(0, (t - 0.35) / 0.65), 1.5))
+              // Reticle: fades quickly
+              techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.5))
+              // Earth dissolves from t=0 — back-hemisphere lines never get bright enough to show
+              const earthFade = Math.max(0, 1.0 - Math.pow(t, 0.8))
               techEarth.setOpacity(earthFade)
               techEarth.setMapOpacity(0.0)
             }
 
             if (aboutMesh) aboutMesh.material.opacity = 0.0
             if (usMesh) usMesh.material.opacity = 0.0
+
           } else {
             // Stage 5: Map Burst — Earth gone, map overlay handles reveal (p: 0.88 → 1.00)
             // Hold camera at final dive position (do not snap — seamless hold)
