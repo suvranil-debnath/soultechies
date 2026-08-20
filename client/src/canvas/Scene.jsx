@@ -449,32 +449,45 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
             if (aboutMesh) aboutMesh.material.opacity = 0.0
             if (usMesh) usMesh.material.opacity = 0.0
-          } else {
-            // Stage 4 (Step 3): GTA V Satellite Dive + Map Reveal (p: 0.76 -> 1.00)
-            const t = (p - 0.76) / 0.24
+          } else if (p <= 0.88) {
+            // Stage 4: GTA V Satellite Dive — Earth zooms in & fades to black (p: 0.76 → 0.88)
+            const t = (p - 0.76) / 0.12  // 0.0 -> 1.0 over this window
 
-            // Dive: camera plunges forward (Z: 6.5 -> 4.0) with telephoto FOV compression
-            // Capped at Z=4.0 so we never clip through the Earth surface (radius 2.4 * max scale 1.6 = 3.84)
-            const plungeT = Math.pow(Math.min(t, 1.0), 1.6)
-            const camZ = 6.5 - plungeT * 2.5   // 6.5 -> 4.0 max
-            camera.position.set(0, 0, camZ)
+            // Camera plunges: Z 6.5 → 4.5 (never clips through the Earth)
+            const plungeT = t * t * (3 - 2 * t)  // smoothstep
+            camera.position.set(0, 0, 6.5 - plungeT * 2.0)  // 6.5 → 4.5
 
-            // Telephoto compression: 60deg -> 22deg (keeps Kolkata area large without zooming past the globe)
-            const fovT = Math.pow(Math.min(t, 1.0), 1.4)
-            camera.fov = 60.0 - fovT * 38.0    // 60 -> 22 deg
+            // Telephoto: 60° → 25° for satellite-lens effect
+            camera.fov = 60.0 - plungeT * 35.0   // 60 → 25
             camera.updateProjectionMatrix()
 
             if (techEarth) {
               techEarth.setPosition(0, 0, 0)
-              // Scale: 1.0 -> max 1.6 (surface stays in FRONT of camera the whole time)
-              techEarth.setScale(1.0 + Math.min(t, 1.0) * 0.6)
+              techEarth.setScale(1.0 + plungeT * 0.55)  // 1.0 → 1.55 max
               techEarth.setTargetLock(1.0)
-              // Reticle fades quickly
-              techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.5))
-              // Earth opacity fades out: starts at t=0.4, fully gone by t=0.75
-              const earthFade = Math.max(0, Math.min(1, (0.75 - t) / 0.35))
+              // Reticle: visible early, gone by t=0.5
+              techEarth.setPinpointOpacity(Math.max(0, 1.0 - t * 2.0))
+              // Earth body: full opacity until t=0.35, then rapidly fades to 0 by t=1.0
+              const earthFade = Math.max(0, 1.0 - Math.pow(Math.max(0, (t - 0.35) / 0.65), 1.5))
               techEarth.setOpacity(earthFade)
               techEarth.setMapOpacity(0.0)
+            }
+
+            if (aboutMesh) aboutMesh.material.opacity = 0.0
+            if (usMesh) usMesh.material.opacity = 0.0
+          } else {
+            // Stage 5: Map Burst — Earth gone, map overlay handles reveal (p: 0.88 → 1.00)
+            // Hold camera at final dive position (do not snap — seamless hold)
+            camera.position.set(0, 0, 4.5)
+            camera.fov = 25.0
+            camera.updateProjectionMatrix()
+
+            if (techEarth) {
+              techEarth.setOpacity(0.0)      // Earth 100% gone — map is now in DOM
+              techEarth.setTargetLock(1.0)
+              techEarth.setPinpointOpacity(0.0)
+              techEarth.setMapOpacity(0.0)
+              techEarth.setScale(1.55)
             }
 
             if (aboutMesh) aboutMesh.material.opacity = 0.0
