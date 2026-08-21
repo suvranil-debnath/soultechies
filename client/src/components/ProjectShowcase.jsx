@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import gsap from 'gsap'
-import { ArrowUp, ArrowDown, ExternalLink, ArrowLeft, ArrowRight, Eye } from 'lucide-react'
+import { ExternalLink, ArrowLeft, ArrowRight } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -48,64 +48,113 @@ export const projectsData = [
   },
 ]
 
+// 3 sets of projects for seamless infinite track sliding
+const EXTENDED_PROJECTS = [
+  ...projectsData,
+  ...projectsData,
+  ...projectsData,
+]
+const N = projectsData.length // 4
+
 export default function ProjectShowcase({ isPreloaderDone }) {
   const containerRef = useRef(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
+  const carouselViewportRef = useRef(null)
+  const trackRef = useRef(null)
+  const topMetaRef = useRef(null)
   const textContentRef = useRef(null)
 
-  // Carousel indices: circular infinite navigation
-  const prevIndex = (currentIndex - 1 + projectsData.length) % projectsData.length
-  const nextIndex = (currentIndex + 1) % projectsData.length
+  const [virtualIndex, setVirtualIndex] = useState(4) // Start at index 4 (first item in middle set)
+  const [isAnimating, setIsAnimating] = useState(false)
 
+  const currentIndex = ((virtualIndex % N) + N) % N
   const currentProject = projectsData[currentIndex]
-  const prevProject = projectsData[prevIndex]
-  const nextProject = projectsData[nextIndex]
 
-  // Transition handler: direction = 1 (next / up) or -1 (prev / down)
+  const CARD_HEIGHT = 480
+  const GAP = 32
+  const PITCH = CARD_HEIGHT + GAP
+
+  // Helper to compute track Y for a given virtual index
+  const getTrackY = (vIdx) => {
+    const vpHeight = carouselViewportRef.current?.clientHeight || window.innerHeight || 750
+    return vpHeight / 2 - (vIdx * PITCH + CARD_HEIGHT / 2)
+  }
+
+  // Initial positioning & window resize sync
+  useEffect(() => {
+    if (!trackRef.current) return
+    const initialY = getTrackY(virtualIndex)
+    gsap.set(trackRef.current, { y: initialY })
+
+    const handleResize = () => {
+      if (!isAnimating && trackRef.current) {
+        gsap.set(trackRef.current, { y: getTrackY(virtualIndex) })
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [virtualIndex, isAnimating])
+
+  // Sequential, seamless vertical track sliding handler
   const handleNavigate = (dir) => {
-    if (isAnimating) return
+    if (isAnimating || !trackRef.current) return
     setIsAnimating(true)
 
+    const nextVIdx = virtualIndex + dir
+    const targetY = getTrackY(nextVIdx)
+
+    // 1. Staggered Text Transition on both top metadata and center text
+    const metaEl = topMetaRef.current
     const textEl = textContentRef.current
-    if (textEl) {
-      // Smooth exit animation for text
-      gsap.to(textEl, {
-        y: dir > 0 ? -26 : 26,
+    const textTargets = [metaEl, textEl].filter(Boolean)
+
+    if (textTargets.length > 0) {
+      gsap.to(textTargets, {
+        y: dir > 0 ? -24 : 24,
         opacity: 0,
         filter: 'blur(6px)',
-        duration: 0.26,
+        duration: 0.24,
         ease: 'power2.in',
         onComplete: () => {
-          if (dir > 0) {
-            setCurrentIndex((prev) => (prev + 1) % projectsData.length)
-          } else {
-            setCurrentIndex((prev) => (prev - 1 + projectsData.length) % projectsData.length)
-          }
-
-          // Smooth enter animation for new text
+          setVirtualIndex(nextVIdx)
           gsap.fromTo(
-            textEl,
-            { y: dir > 0 ? 26 : -26, opacity: 0, filter: 'blur(6px)' },
+            textTargets,
+            { y: dir > 0 ? 24 : -24, opacity: 0, filter: 'blur(6px)' },
             {
               y: 0,
               opacity: 1,
               filter: 'blur(0px)',
               duration: 0.42,
               ease: 'power3.out',
-              onComplete: () => setIsAnimating(false),
             }
           )
         },
       })
     } else {
-      if (dir > 0) {
-        setCurrentIndex((prev) => (prev + 1) % projectsData.length)
-      } else {
-        setCurrentIndex((prev) => (prev - 1 + projectsData.length) % projectsData.length)
-      }
-      setTimeout(() => setIsAnimating(false), 380)
+      setVirtualIndex(nextVIdx)
     }
+
+    // 2. Smooth Physical Sliding Animation of the Vertical Track
+    gsap.to(trackRef.current, {
+      y: targetY,
+      duration: 0.68,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        // Seamless loop normalization: keep index in the middle set [4..7]
+        let normalized = nextVIdx
+        if (normalized >= 8) {
+          normalized -= N
+        } else if (normalized < 4) {
+          normalized += N
+        }
+
+        if (normalized !== nextVIdx) {
+          setVirtualIndex(normalized)
+          gsap.set(trackRef.current, { y: getTrackY(normalized) })
+        }
+        setIsAnimating(false)
+      },
+    })
   }
 
   // Scroll Trigger Reveal: enters at p >= 0.82, fully visible & interactive at p >= 0.90
@@ -160,71 +209,73 @@ export default function ProjectShowcase({ isPreloaderDone }) {
         justifyContent: 'center',
         color: '#ffffff',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.88) 100%)',
+        background: 'transparent',
       }}
     >
       <div
         style={{
-          width: '100%',
-          maxWidth: '1440px',
-          height: '86vh',
-          margin: '0 auto',
-          padding: 'clamp(16px, 2.5vw, 40px) clamp(20px, 4vw, 64px)',
+          width: '100vw',
+          maxWidth: '100%',
+          height: '100vh',
+          margin: 0,
+          padding: '0 clamp(16px, 3vw, 44px)',
           display: 'grid',
-          gridTemplateColumns: 'minmax(320px, 1fr) minmax(360px, 1.2fr)',
-          gap: 'clamp(24px, 4vw, 72px)',
+          gridTemplateColumns: 'minmax(320px, 0.9fr) minmax(440px, 1.4fr)',
+          gap: 'clamp(20px, 3.5vw, 48px)',
           alignItems: 'center',
         }}
       >
         {/* ========================================================= */}
-        {/* LEFT COLUMN: Project Details & Metadata (Reference 2)     */}
+        {/* LEFT COLUMN: Pinned Top Meta, Centered Details, Pinned Bottom Buttons */}
         {/* ========================================================= */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             height: '100%',
             position: 'relative',
             zIndex: 2,
-            padding: '24px 28px 24px 0',
-            background: 'radial-gradient(ellipse at 20% 50%, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%)',
+            padding: 'clamp(36px, 6vh, 64px) clamp(16px, 2.5vw, 36px) clamp(32px, 5vh, 56px) clamp(16px, 2.5vw, 36px)',
+            background: 'radial-gradient(ellipse at 15% 50%, rgba(0, 0, 0, 0.45) 0%, transparent 80%)',
             borderRadius: '24px',
+            boxSizing: 'border-box',
           }}
         >
-          {/* Animated Text Content Box */}
+          {/* 1. TOP EDGE: Index Counter, Year & Category */}
+          <div
+            ref={topMetaRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              fontFamily: "'Space Grotesk', monospace",
+              fontSize: '13px',
+              letterSpacing: '0.18em',
+              color: '#00f0ff',
+              fontWeight: 600,
+            }}
+          >
+            <span>{String(currentProject.id).padStart(2, '0')}</span>
+            <div style={{ width: '40px', height: '1px', background: 'rgba(0, 240, 255, 0.4)' }} />
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{currentProject.year}</span>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} />
+            <span style={{ color: '#38bdf8', fontSize: '11px', textTransform: 'uppercase' }}>
+              {currentProject.category}
+            </span>
+          </div>
+
+          {/* 2. CENTER: Project Big Title, Description, Tags & Action Link */}
           <div
             ref={textContentRef}
             style={{
               display: 'flex',
               flexDirection: 'column',
               gap: 'clamp(12px, 1.8vh, 22px)',
-              minHeight: '380px',
               justifyContent: 'center',
+              margin: 'auto 0',
             }}
           >
-            {/* Index Counter & Year */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '14px',
-                fontFamily: "'Space Grotesk', monospace",
-                fontSize: '13px',
-                letterSpacing: '0.18em',
-                color: '#00f0ff',
-                fontWeight: 600,
-              }}
-            >
-              <span>{String(currentProject.id).padStart(2, '0')}</span>
-              <div style={{ width: '40px', height: '1px', background: 'rgba(0, 240, 255, 0.4)' }} />
-              <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{currentProject.year}</span>
-              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#38bdf8' }} />
-              <span style={{ color: '#38bdf8', fontSize: '11px', textTransform: 'uppercase' }}>
-                {currentProject.category}
-              </span>
-            </div>
-
             {/* Project Big Title */}
             <h2
               style={{
@@ -314,15 +365,12 @@ export default function ProjectShowcase({ isPreloaderDone }) {
             </a>
           </div>
 
-          {/* ========================================================= */}
-          {/* ACTION BUTTONS & PAGINATION PILLS (Reference 1 Bottom)     */}
-          {/* ========================================================= */}
+          {/* 3. BOTTOM EDGE: Action Buttons & Pagination Pills */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '16px',
-              marginTop: 'clamp(20px, 3.5vh, 40px)',
               paddingTop: '16px',
               borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             }}
@@ -415,7 +463,8 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                     key={idx}
                     onClick={() => {
                       if (idx !== currentIndex && !isAnimating) {
-                        handleNavigate(idx > currentIndex ? 1 : -1)
+                        const diff = idx - currentIndex
+                        handleNavigate(diff)
                       }
                     }}
                     style={{
@@ -436,186 +485,108 @@ export default function ProjectShowcase({ isPreloaderDone }) {
           </div>
         </div>
 
-        {/* ========================================================================= */}
-        {/* RIGHT COLUMN: Infinite Vertical Carousel (Reference 1 Drawing)           */}
+        {/* ========================================================= */}
+        {/* RIGHT COLUMN: Continuous Physical Sliding Vertical Carousel Track         */}
         {/* Glimpse of Prev at Top | Main Big in Center | Glimpse of Next at Bottom   */}
-        {/* ========================================================================= */}
+        {/* ========================================================= */}
         <div
+          ref={carouselViewportRef}
           style={{
             position: 'relative',
             height: '100%',
+            width: '100%',
+            overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            overflow: 'hidden',
           }}
         >
-          {/* Outer container holding the 3 vertical cards */}
+          {/* Moving Vertical Track holding all cloned cards in physical sequence */}
           <div
+            ref={trackRef}
             style={{
-              position: 'relative',
-              width: '100%',
-              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
+              gap: `${GAP}px`,
+              willChange: 'transform',
             }}
           >
-            {/* 1. TOP PEEK CARD (Glimpse of Previous Image) */}
-            <div
-              onClick={() => handleNavigate(-1)}
-              style={{
-                position: 'absolute',
-                top: '-10%',
-                width: '86%',
-                height: '24%',
-                borderRadius: '18px',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                opacity: 0.45,
-                transform: 'scale(0.92)',
-                filter: 'blur(2px) brightness(0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-                transition: 'all 0.55s cubic-bezier(0.22, 1, 0.36, 1)',
-                zIndex: 1,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.75'
-                e.currentTarget.style.filter = 'blur(0px) brightness(0.85)'
-                e.currentTarget.style.transform = 'scale(0.95)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '0.45'
-                e.currentTarget.style.filter = 'blur(2px) brightness(0.65)'
-                e.currentTarget.style.transform = 'scale(0.92)'
-              }}
-            >
-              <img
-                src={prevProject.image}
-                alt={prevProject.title}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent 80%)',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'space-between',
-                  padding: '12px 18px',
-                }}
-              >
-                <span
+            {EXTENDED_PROJECTS.map((proj, idx) => {
+              const isActive = idx === virtualIndex
+              const isPeekTop = idx === virtualIndex - 1
+              const isPeekBottom = idx === virtualIndex + 1
+
+              return (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    if (!isActive && !isAnimating) {
+                      handleNavigate(idx - virtualIndex)
+                    }
+                  }}
                   style={{
-                    fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '11px',
-                    letterSpacing: '0.1em',
-                    color: '#ffffff',
-                    fontWeight: 600,
+                    position: 'relative',
+                    width: '100%',
+                    height: `${CARD_HEIGHT}px`,
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    cursor: !isActive ? 'pointer' : 'default',
+                    transform: isActive ? 'scale(1.0)' : 'scale(0.88)',
+                    opacity: isActive ? 1.0 : (isPeekTop || isPeekBottom ? 0.45 : 0.15),
+                    filter: isActive ? 'blur(0px) brightness(1.0)' : 'blur(2px) brightness(0.65)',
+                    border: isActive
+                      ? '1px solid rgba(255, 255, 255, 0.18)'
+                      : '1px solid rgba(255, 255, 255, 0.10)',
+                    boxShadow: isActive
+                      ? '0 24px 64px rgba(0, 0, 0, 0.8), 0 0 32px rgba(0, 240, 255, 0.12)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.6)',
+                    transition: 'transform 0.65s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.65s ease, filter 0.65s ease',
+                    zIndex: isActive ? 3 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.opacity = '0.70'
+                      e.currentTarget.style.filter = 'blur(0px) brightness(0.85)'
+                      e.currentTarget.style.transform = 'scale(0.92)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.currentTarget.style.opacity = isPeekTop || isPeekBottom ? '0.45' : '0.15'
+                      e.currentTarget.style.filter = 'blur(2px) brightness(0.65)'
+                      e.currentTarget.style.transform = 'scale(0.88)'
+                    }
                   }}
                 >
-                  PREV // {prevProject.title}
-                </span>
-                <ArrowUp size={14} color="#00f0ff" />
-              </div>
-            </div>
-
-            {/* 2. CENTER MAIN ACTIVE CARD (Large, Crisp, Focused) */}
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                height: '62%',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 24px 64px rgba(0, 0, 0, 0.8), 0 0 32px rgba(0, 240, 255, 0.12)',
-                transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-                zIndex: 3,
-              }}
-            >
-              <img
-                key={currentProject.id}
-                src={currentProject.image}
-                alt={currentProject.title}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                  animation: 'fadeInScale 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards',
-                }}
-              />
-
-              {/* Cybernetic HUD Frame Overlay */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  pointerEvents: 'none',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 40%, transparent 70%)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: '24px',
-                }}
-              >
-                {/* Top Corner Badge */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span
+                  <img
+                    src={proj.image}
+                    alt={proj.title}
                     style={{
-                      padding: '4px 12px',
-                      borderRadius: '6px',
-                      background: 'rgba(0,0,0,0.65)',
-                      border: '1px solid rgba(0, 240, 255, 0.4)',
-                      fontFamily: "'Space Grotesk', monospace",
-                      fontSize: '11px',
-                      letterSpacing: '0.12em',
-                      color: '#00f0ff',
-                      fontWeight: 600,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
                     }}
-                  >
-                    FEATURED PROJECT // 0{currentProject.id}
-                  </span>
+                  />
+
+                  {/* Sub-text Overlay Only (bottom-left) */}
                   <div
                     style={{
+                      position: 'absolute',
+                      inset: 0,
+                      pointerEvents: 'none',
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.05) 30%, transparent 60%)',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: 'rgba(0,0,0,0.65)',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(255,255,255,0.15)',
+                      alignItems: 'flex-end',
+                      padding: '24px',
                     }}
                   >
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e' }} />
-                    <span style={{ fontFamily: "'Space Grotesk', monospace", fontSize: '10px', letterSpacing: '0.1em' }}>
-                      ARCHIVE LIVE
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bottom Corner Meta */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <div>
-                    <div
-                      style={{
-                        fontFamily: "'Outfit', sans-serif",
-                        fontSize: '22px',
-                        fontWeight: 700,
-                        letterSpacing: '-0.01em',
-                        color: '#ffffff',
-                      }}
-                    >
-                      {currentProject.title}
-                    </div>
                     <div
                       style={{
                         fontFamily: "'Space Grotesk', monospace",
@@ -624,130 +595,15 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                         marginTop: '2px',
                       }}
                     >
-                      {currentProject.category} // {currentProject.year}
+                      {proj.category}
                     </div>
                   </div>
-
-                  <a
-                    href={currentProject.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      pointerEvents: 'auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 16px',
-                      borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.12)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255, 255, 255, 0.25)',
-                      color: '#ffffff',
-                      textDecoration: 'none',
-                      fontSize: '12px',
-                      fontFamily: "'Space Grotesk', monospace",
-                      fontWeight: 600,
-                      letterSpacing: '0.05em',
-                      transition: 'all 0.25s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#00f0ff'
-                      e.currentTarget.style.color = '#000000'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)'
-                      e.currentTarget.style.color = '#ffffff'
-                    }}
-                  >
-                    <Eye size={14} />
-                    <span>VIEW DETAILS</span>
-                  </a>
                 </div>
-              </div>
-            </div>
-
-            {/* 3. BOTTOM PEEK CARD (Glimpse of Next Image) */}
-            <div
-              onClick={() => handleNavigate(1)}
-              style={{
-                position: 'absolute',
-                bottom: '-10%',
-                width: '86%',
-                height: '24%',
-                borderRadius: '18px',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                opacity: 0.45,
-                transform: 'scale(0.92)',
-                filter: 'blur(2px) brightness(0.65)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
-                transition: 'all 0.55s cubic-bezier(0.22, 1, 0.36, 1)',
-                zIndex: 1,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '0.75'
-                e.currentTarget.style.filter = 'blur(0px) brightness(0.85)'
-                e.currentTarget.style.transform = 'scale(0.95)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '0.45'
-                e.currentTarget.style.filter = 'blur(2px) brightness(0.65)'
-                e.currentTarget.style.transform = 'scale(0.92)'
-              }}
-            >
-              <img
-                src={nextProject.image}
-                alt={nextProject.title}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent 80%)',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  padding: '12px 18px',
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '11px',
-                    letterSpacing: '0.1em',
-                    color: '#ffffff',
-                    fontWeight: 600,
-                  }}
-                >
-                  NEXT // {nextProject.title}
-                </span>
-                <ArrowDown size={14} color="#00f0ff" />
-              </div>
-            </div>
+              )
+            })}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes fadeInScale {
-          from {
-            opacity: 0.3;
-            transform: scale(1.06);
-            filter: blur(8px);
-          }
-          to {
-            opacity: 1.0;
-            transform: scale(1.0);
-            filter: blur(0px);
-          }
-        }
-      `}</style>
     </div>
   )
 }

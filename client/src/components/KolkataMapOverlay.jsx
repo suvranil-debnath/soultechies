@@ -66,7 +66,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           img.style.maskImage        = mask
           img.style.webkitMaskImage  = mask
         } else if (p <= BLUR_END) {
-          // Phase 2: Map smoothly dims into deep dark ambient veil for Project Showcase (0.86 -> 0.94)
+          // Phase 2: Map smoothly transitions into comfortable ambient backdrop for Project Showcase (0.86 -> 0.94)
           const t = (p - BLUR_START) / (BLUR_END - BLUR_START)
           const eased = t * (2 - t) // ease-out
 
@@ -74,12 +74,13 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           el.style.pointerEvents = 'none'
 
           const imgScale   = 1.0 + eased * 0.05   // 1.0 → 1.05
-          const blur       = eased * 10.0         // Soft 10px blur
-          const brightness = 1.0 - eased * 0.30   // 1.0 → 0.70 dimmed dark
-          const opacity    = 1.0 - eased * 0.82   // 1.0 → 0.18 subtle dark veil
+          const blur       = eased * 5.5          // Soft 5.5px blur diffuses dense clusters
+          const brightness = 1.0 + (1 - eased) * 0.5 + eased * 0.20 // 1.5 → 1.20
+          const opacity    = 1.0 - eased * 0.50   // 1.0 → 0.50 balanced background visibility
+          const contrast   = 1.0 + eased * 0.15   // 1.0 → 1.15
 
           img.style.transform = `scale(${imgScale.toFixed(4)})`
-          img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(2)}) contrast(1.05)`
+          img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(2)}) contrast(${contrast.toFixed(2)})`
           img.style.opacity   = opacity.toFixed(4)
 
           if (eased > 0.6) {
@@ -93,12 +94,12 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
             img.style.webkitMaskImage  = mask
           }
         } else {
-          // Phase 3: Deep dark ambient Kolkata map backdrop behind Project Showcase (p > 0.94)
+          // Phase 3: Pinned comfortable ambient Kolkata map backdrop behind Project Showcase (p > 0.94)
           el.style.opacity       = '1'
           el.style.pointerEvents = 'none'
           img.style.transform    = 'scale(1.05)'
-          img.style.filter       = 'blur(10px) brightness(0.70) contrast(1.05)'
-          img.style.opacity      = '0.18'
+          img.style.filter       = 'blur(5.5px) brightness(1.20) contrast(1.15)'
+          img.style.opacity      = '0.50'
           img.style.maskImage    = 'none'
           img.style.webkitMaskImage = 'none'
         }
