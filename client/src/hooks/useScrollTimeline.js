@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export function useScrollTimeline() {
+export function useScrollTimeline(isPreloaderDone = true) {
   const lenisRef = useRef(null)
 
   useEffect(() => {
@@ -39,6 +39,24 @@ export function useScrollTimeline() {
       lenis.destroy()
     }
   }, [])
+
+  useEffect(() => {
+    const lenis = lenisRef.current
+    if (!lenis) return
+
+    if (!isPreloaderDone) {
+      lenis.stop()
+      lenis.scrollTo(0, { immediate: true })
+      window.scrollTo(0, 0)
+    } else {
+      lenis.start()
+      lenis.scrollTo(0, { immediate: true })
+      window.scrollTo(0, 0)
+      setTimeout(() => {
+        ScrollTrigger.refresh()
+      }, 150)
+    }
+  }, [isPreloaderDone])
 
   return lenisRef
 }

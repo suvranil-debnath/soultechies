@@ -6,6 +6,7 @@ import Preloader from './components/Preloader'
 import AboutSection from './components/AboutSection'
 import HeroSection from './components/HeroSection'
 import KolkataMapOverlay from './components/KolkataMapOverlay'
+import ProjectShowcase from './components/ProjectShowcase'
 import Navbar from './components/Navbar'
 import { useScrollTimeline } from './hooks/useScrollTimeline'
 
@@ -14,7 +15,7 @@ function App() {
   const sceneSnapRef = useRef(null)
 
   // Initialize Lenis smooth scroll + GSAP ScrollTrigger
-  useScrollTimeline()
+  useScrollTimeline(isPreloaderDone)
 
   // Lock scroll during preloader, reset to top, and refresh on complete
   useEffect(() => {
@@ -58,7 +59,7 @@ function App() {
         registerSnapCallback={(fn) => { sceneSnapRef.current = fn }}
       />
 
-      {/* Layer 1: Scrollable content (hero wordmark, about us section) */}
+      {/* Layer 1: Scrollable content (hero wordmark, about us section, map, project showcase) */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         <HeroSection
           isPreloaderDone={isPreloaderDone}
@@ -66,6 +67,7 @@ function App() {
         />
         <AboutSection isPreloaderDone={isPreloaderDone} />
         <KolkataMapOverlay isPreloaderDone={isPreloaderDone} />
+        <ProjectShowcase isPreloaderDone={isPreloaderDone} />
       </div>
 
       {/* Layer 2: Preloader overlay (highest, removed on complete) */}

@@ -49,33 +49,48 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
     })
 
     // Scroll-driven Horizontal Wordmark Exit: S drifts strictly LEFT, ULTECHIES drifts strictly RIGHT
-    // Completes early (by 18% scroll) so text is 100% off-screen before black hole zoom & dissolution!
-    const scrollTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: document.body,
-        start: 'top top',
-        end: '18% top',
-        scrub: 1.0,
+    // Completes early (by p = 0.18 scroll) so text is 100% off-screen before black hole zoom & dissolution!
+    const st = ScrollTrigger.create({
+      trigger: document.body,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true,
+      onUpdate: (self) => {
+        const p = self.progress
+        if (!s || !ultechies) return
+
+        if (p <= 0.002) {
+          // At top of scroll (hero view) — preserve standard entry position
+          if (entryTl.progress() >= 1) {
+            s.style.transform = 'translateX(0vw)'
+            s.style.opacity = '1'
+            s.style.filter = 'blur(0px)'
+            ultechies.style.transform = 'translateX(0vw)'
+            ultechies.style.opacity = '1'
+            ultechies.style.filter = 'blur(0px)'
+          }
+          return
+        }
+
+        // Scroll exit (p: 0.00 -> 0.16)
+        const t = Math.min(1, p / 0.16)
+        const ease = t * t // power2.in
+        const op = Math.max(0, 1 - t)
+        const blur = (t * 10).toFixed(1)
+
+        s.style.transform = `translateX(${(-ease * 75).toFixed(1)}vw)`
+        s.style.opacity = op.toFixed(4)
+        s.style.filter = `blur(${blur}px)`
+
+        ultechies.style.transform = `translateX(${(ease * 75).toFixed(1)}vw)`
+        ultechies.style.opacity = op.toFixed(4)
+        ultechies.style.filter = `blur(${blur}px)`
       },
     })
 
-    scrollTl.to(s, {
-      x: '-75vw',
-      opacity: 0,
-      filter: 'blur(10px)',
-      ease: 'power2.in',
-    }, 0)
-
-    scrollTl.to(ultechies, {
-      x: '75vw',
-      opacity: 0,
-      filter: 'blur(10px)',
-      ease: 'power2.in',
-    }, 0)
-
     return () => {
       entryTl.kill()
-      scrollTl.kill()
+      st.kill()
     }
   }, [isPreloaderDone, onGapMeasured])
 
@@ -85,7 +100,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '500vh',
+        height: '560vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}

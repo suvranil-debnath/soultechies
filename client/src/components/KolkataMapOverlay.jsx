@@ -11,11 +11,15 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
   useEffect(() => {
     if (!isPreloaderDone || !containerRef.current) return
 
-    // Synced with Scene.jsx:
-    //   p < 0.88  → hidden (Earth diving / fading)
-    //   p 0.88→1.0 → map iris-bursts from center, edges always blend into black
-    const MAP_START = 0.88
-    const MAP_END   = 1.00
+    // Synced with Scene.jsx & ProjectShowcase:
+    //   p < 0.76: hidden (Earth diving / fading)
+    //   p 0.76 -> 0.86: map iris-bursts from center into full sharp view
+    //   p 0.86 -> 0.94: map gently blurs & enhances brightness to become the glowing backdrop for Project Showcase
+    //   p >= 0.94: persistent luminous atmospheric map background (reaches end of scroll without dead space)
+    const BURST_START = 0.76
+    const BURST_END   = 0.86
+    const BLUR_START  = 0.86
+    const BLUR_END    = 0.94
 
     const st = ScrollTrigger.create({
       trigger: document.body,
@@ -28,49 +32,76 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         const img = mapImageRef.current
         if (!el || !img) return
 
-        if (p < MAP_START) {
+        if (p < BURST_START) {
           el.style.opacity       = '0'
           el.style.pointerEvents = 'none'
           img.style.opacity      = '0'
           img.style.transform    = 'scale(0.28)'
           img.style.filter       = 'blur(12px) brightness(2.5)'
-          // Tight initial pinpoint mask
           const initMask = 'radial-gradient(ellipse 18% 14% at 50% 50%, black 0%, black 30%, transparent 100%)'
           img.style.maskImage        = initMask
           img.style.webkitMaskImage  = initMask
           return
         }
 
-        const t     = (p - MAP_START) / (MAP_END - MAP_START)
-        const eased = 1 - Math.pow(1 - t, 2.8)
+        if (p <= BURST_END) {
+          // Phase 1: Iris burst from center dot to full sharp map (0.76 -> 0.86)
+          const t = (p - BURST_START) / (BURST_END - BURST_START)
+          const eased = 1 - Math.pow(1 - t, 2.8)
 
-        // ── Container fade-in
-        el.style.opacity       = eased.toFixed(4)
-        el.style.pointerEvents = t > 0.3 ? 'auto' : 'none'
+          el.style.opacity       = eased.toFixed(4)
+          el.style.pointerEvents = t > 0.3 ? 'auto' : 'none'
 
-        // ── Image scale + blur-to-sharp
-        const imgScale   = 0.28 + eased * 0.72   // 0.28 → 1.0
-        const blur       = (1 - eased) * 10
-        const brightness = 1 + (1 - eased) * 1.5
+          const imgScale   = 0.28 + eased * 0.72   // 0.28 → 1.0
+          const blur       = (1 - eased) * 10
+          const brightness = 1 + (1 - eased) * 1.5
 
-        img.style.transform = `scale(${imgScale.toFixed(4)})`
-        img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`
-        img.style.opacity   = Math.min(1, t * 2.5).toFixed(4)
+          img.style.transform = `scale(${imgScale.toFixed(4)})`
+          img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(3)})`
+          img.style.opacity   = Math.min(1, t * 2.5).toFixed(4)
 
-        // ── Radial gradient mask — directly on the img so it clips the map's
-        //    own rectangular background, not an outer wrapper.
-        //
-        //    Key design: soft zone spans 30%→100% of the ellipse (70% of radius
-        //    is a gradient fade). This creates a wide, feathered edge that
-        //    always melts into the black background — even at full size.
-        //
-        //    Final ellipse is capped at 85%×68% (not 100%) so there is ALWAYS
-        //    a visible vignette blending the corners into black.
-        const rx   = 18 + eased * 67    // 18% → 85%
-        const ry   = 14 + eased * 54    // 14% → 68%  (landscape aspect)
-        const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 0%, black 30%, transparent 100%)`
-        img.style.maskImage        = mask
-        img.style.webkitMaskImage  = mask
+          const rx   = 18 + eased * 67    // 18% → 85%
+          const ry   = 14 + eased * 54    // 14% → 68%
+          const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 0%, black 30%, transparent 100%)`
+          img.style.maskImage        = mask
+          img.style.webkitMaskImage  = mask
+        } else if (p <= BLUR_END) {
+          // Phase 2: Map smoothly dims into deep dark ambient veil for Project Showcase (0.86 -> 0.94)
+          const t = (p - BLUR_START) / (BLUR_END - BLUR_START)
+          const eased = t * (2 - t) // ease-out
+
+          el.style.opacity       = '1'
+          el.style.pointerEvents = 'none'
+
+          const imgScale   = 1.0 + eased * 0.05   // 1.0 → 1.05
+          const blur       = eased * 10.0         // Soft 10px blur
+          const brightness = 1.0 - eased * 0.30   // 1.0 → 0.70 dimmed dark
+          const opacity    = 1.0 - eased * 0.82   // 1.0 → 0.18 subtle dark veil
+
+          img.style.transform = `scale(${imgScale.toFixed(4)})`
+          img.style.filter    = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(2)}) contrast(1.05)`
+          img.style.opacity   = opacity.toFixed(4)
+
+          if (eased > 0.6) {
+            img.style.maskImage        = 'none'
+            img.style.webkitMaskImage  = 'none'
+          } else {
+            const rx   = 85 + eased * 15
+            const ry   = 68 + eased * 32
+            const mask = `radial-gradient(ellipse ${rx.toFixed(1)}% ${ry.toFixed(1)}% at 50% 50%, black 0%, black 85%, transparent 100%)`
+            img.style.maskImage        = mask
+            img.style.webkitMaskImage  = mask
+          }
+        } else {
+          // Phase 3: Deep dark ambient Kolkata map backdrop behind Project Showcase (p > 0.94)
+          el.style.opacity       = '1'
+          el.style.pointerEvents = 'none'
+          img.style.transform    = 'scale(1.05)'
+          img.style.filter       = 'blur(10px) brightness(0.70) contrast(1.05)'
+          img.style.opacity      = '0.18'
+          img.style.maskImage    = 'none'
+          img.style.webkitMaskImage = 'none'
+        }
       },
     })
 
@@ -100,7 +131,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         style={{
           width:           '100vw',
           height:          '100vh',
-          objectFit:       'contain',
+          objectFit:       'cover',
           maxWidth:        '100%',
           maxHeight:       '100%',
           display:         'block',
