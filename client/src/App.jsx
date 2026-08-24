@@ -7,6 +7,7 @@ import AboutSection from './components/AboutSection'
 import HeroSection from './components/HeroSection'
 import KolkataMapOverlay from './components/KolkataMapOverlay'
 import ProjectShowcase from './components/ProjectShowcase'
+import WorkedWithSection from './components/WorkedWithSection'
 import Navbar from './components/Navbar'
 import { useScrollTimeline } from './hooks/useScrollTimeline'
 
@@ -59,7 +60,7 @@ function App() {
         registerSnapCallback={(fn) => { sceneSnapRef.current = fn }}
       />
 
-      {/* Layer 1: Scrollable content (hero wordmark, about us section, map, project showcase) */}
+      {/* Layer 1: Scrollable content (hero wordmark, about us section, map, project showcase, worked with stage) */}
       <div style={{ position: 'relative', zIndex: 10 }}>
         <HeroSection
           isPreloaderDone={isPreloaderDone}
@@ -68,6 +69,7 @@ function App() {
         <AboutSection isPreloaderDone={isPreloaderDone} />
         <KolkataMapOverlay isPreloaderDone={isPreloaderDone} />
         <ProjectShowcase isPreloaderDone={isPreloaderDone} />
+        <WorkedWithSection isPreloaderDone={isPreloaderDone} />
       </div>
 
       {/* Layer 2: Preloader overlay (highest, removed on complete) */}

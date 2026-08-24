@@ -12,14 +12,15 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
     if (!isPreloaderDone || !containerRef.current) return
 
     // Synced with Scene.jsx & ProjectShowcase:
-    //   p < 0.76: hidden (Earth diving / fading)
-    //   p 0.76 -> 0.86: map iris-bursts from center into full sharp view
-    //   p 0.86 -> 0.94: map gently blurs & enhances brightness to become the glowing backdrop for Project Showcase
-    //   p >= 0.94: persistent luminous atmospheric map background (reaches end of scroll without dead space)
-    const BURST_START = 0.76
-    const BURST_END   = 0.86
-    const BLUR_START  = 0.86
-    const BLUR_END    = 0.94
+    //   p < 0.60: hidden (Earth diving / fading)
+    //   p 0.60 -> 0.68: map iris-bursts from center into full sharp view
+    //   p 0.68 -> 0.76: map gently blurs & enhances brightness to become backdrop for Project Showcase
+    //   p 0.76 -> 0.85: persistent ambient map background
+    //   p > 0.85: covered by WorkedWith full-bleed slide-up stage
+    const BURST_START = 0.60
+    const BURST_END   = 0.68
+    const BLUR_START  = 0.68
+    const BLUR_END    = 0.76
 
     const st = ScrollTrigger.create({
       trigger: document.body,
@@ -45,7 +46,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
         }
 
         if (p <= BURST_END) {
-          // Phase 1: Iris burst from center dot to full sharp map (0.76 -> 0.86)
+          // Phase 1: Iris burst from center dot to full sharp map (0.60 -> 0.68)
           const t = (p - BURST_START) / (BURST_END - BURST_START)
           const eased = 1 - Math.pow(1 - t, 2.8)
 
@@ -66,7 +67,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           img.style.maskImage        = mask
           img.style.webkitMaskImage  = mask
         } else if (p <= BLUR_END) {
-          // Phase 2: Map smoothly transitions into comfortable ambient backdrop for Project Showcase (0.86 -> 0.94)
+          // Phase 2: Map smoothly transitions into comfortable ambient backdrop for Project Showcase (0.68 -> 0.76)
           const t = (p - BLUR_START) / (BLUR_END - BLUR_START)
           const eased = t * (2 - t) // ease-out
 
@@ -93,13 +94,24 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
             img.style.maskImage        = mask
             img.style.webkitMaskImage  = mask
           }
-        } else {
-          // Phase 3: Pinned comfortable ambient Kolkata map backdrop behind Project Showcase (p > 0.94)
+        } else if (p <= 0.85) {
+          // Phase 3: Pinned comfortable ambient Kolkata map backdrop behind Project Showcase (0.76 -> 0.85)
           el.style.opacity       = '1'
           el.style.pointerEvents = 'none'
           img.style.transform    = 'scale(1.05)'
           img.style.filter       = 'blur(5.5px) brightness(1.20) contrast(1.15)'
           img.style.opacity      = '0.50'
+          img.style.maskImage    = 'none'
+          img.style.webkitMaskImage = 'none'
+        } else {
+          // Phase 4: Stage covers map as WorkedWith slides up (p > 0.85)
+          const t = Math.min(1, (p - 0.85) / 0.09)
+          const mapOp = (0.50 * (1 - t)).toFixed(4)
+          el.style.opacity       = mapOp
+          el.style.pointerEvents = 'none'
+          img.style.transform    = 'scale(1.05)'
+          img.style.filter       = 'blur(5.5px) brightness(1.20) contrast(1.15)'
+          img.style.opacity      = mapOp
           img.style.maskImage    = 'none'
           img.style.webkitMaskImage = 'none'
         }

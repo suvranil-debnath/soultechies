@@ -18,10 +18,10 @@ export default function AboutSection({ isPreloaderDone }) {
     const rightCol = rightColRef.current
 
     // Synchronized Scroll Control (matches Scene.jsx):
-    //   p < 0.16: Hidden during Hero & Black Hole (guarantees clean refresh at top)
-    //   0.16 <= p <= 0.32: Initial staging — Earth in lower-third, metadata fades in
-    //   0.32 < p <= 0.48: Text split — leftCol drifts left, rightCol drifts right, fades to 0
-    //   p > 0.48: Completely hidden
+    //   p < 0.12: Hidden during Hero & Black Hole (guarantees clean refresh at top)
+    //   0.12 <= p <= 0.24: Initial staging — Earth in lower-third, metadata fades in
+    //   0.24 < p <= 0.36: Text split — leftCol drifts left, rightCol drifts right, fades to 0
+    //   p > 0.36: Completely hidden
     const st = ScrollTrigger.create({
       trigger: document.body,
       start: 'top top',
@@ -31,7 +31,7 @@ export default function AboutSection({ isPreloaderDone }) {
         const p = self.progress
         if (!container || !leftCol || !rightCol) return
 
-        if (p < 0.16) {
+        if (p < 0.12) {
           // 100% hidden on hero screen / refresh
           container.style.opacity = '0'
           container.style.pointerEvents = 'none'
@@ -39,9 +39,9 @@ export default function AboutSection({ isPreloaderDone }) {
           leftCol.style.transform = 'translateY(24px)'
           rightCol.style.opacity = '0'
           rightCol.style.transform = 'translateY(24px)'
-        } else if (p <= 0.32) {
-          // Stage 1: Fade in with initial Earth staging (16% -> 32%)
-          const t = (p - 0.16) / 0.16
+        } else if (p <= 0.24) {
+          // Stage 1: Fade in with initial Earth staging (12% -> 24%)
+          const t = (p - 0.12) / 0.12
           const eased = t * (2 - t) // ease-out
           const opacity = Math.min(1, eased * 1.2)
           const y = (1 - eased) * 24
@@ -54,9 +54,9 @@ export default function AboutSection({ isPreloaderDone }) {
 
           rightCol.style.opacity = opacity.toFixed(4)
           rightCol.style.transform = `translateY(${y.toFixed(1)}px)`
-        } else if (p <= 0.48) {
-          // Stage 2: Disappear in sync with "ABOUT" & "US" split (32% -> 48%)
-          const t = (p - 0.32) / 0.16
+        } else if (p <= 0.36) {
+          // Stage 2: Disappear in sync with "ABOUT" & "US" split (24% -> 36%)
+          const t = (p - 0.24) / 0.12
           const easeT = t * t
           const opacity = Math.max(0, 1.0 - t * 1.6)
 
@@ -69,7 +69,7 @@ export default function AboutSection({ isPreloaderDone }) {
           rightCol.style.opacity = opacity.toFixed(4)
           rightCol.style.transform = `translate(${(easeT * 50).toFixed(1)}px, ${(-easeT * 20).toFixed(1)}px)`
         } else {
-          // Fully gone after 48%
+          // Fully gone after 36%
           container.style.opacity = '0'
           container.style.pointerEvents = 'none'
           leftCol.style.opacity = '0'

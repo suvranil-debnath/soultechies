@@ -332,13 +332,13 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
         const aboutMesh = aboutTextMeshRef.current
         const usMesh = usTextMeshRef.current
 
-        // Stage 0: Black Hole Zoom & Dissolution (p: 0.00 -> 0.16)
-        if (p <= 0.16) {
+        // Stage 0: Black Hole Zoom & Dissolution (p: 0.00 -> 0.12)
+        if (p <= 0.12) {
           if (bloomPassNodeRef.current) {
             bloomPassNodeRef.current.threshold.value = userConfig.bloomThreshold
             bloomPassNodeRef.current.strength.value = userConfig.bloomStrength
           }
-          const t = p / 0.16
+          const t = p / 0.12
           const currentX = baseOffsetPx.current * (1.0 - t)
           const currentY = -0.2 * t
           const targetZ = 27 - t * 23.5 // 27 -> 3.5
@@ -367,7 +367,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           if (aboutMesh) aboutMesh.material.opacity = 0.0
           if (usMesh) usMesh.material.opacity = 0.0
         } else {
-          // p > 0.16: BLACK HOLE IS 100% GONE AND DISAPPEARED!
+          // p > 0.12: BLACK HOLE IS 100% GONE AND DISAPPEARED!
           if (bloomPassNodeRef.current) {
             bloomPassNodeRef.current.threshold.value = 1.05
             bloomPassNodeRef.current.strength.value = 0.35
@@ -376,9 +376,9 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
           sim.setDiskBrightness(0.0)
           sim.setParticleDispersion(1.0)
 
-          if (p <= 0.32) {
-            // Stage 1: Initial Staging — Earth in Lower-Third with "ABOUT" and "US" (p: 0.16 -> 0.32)
-            const t = (p - 0.16) / 0.16
+          if (p <= 0.24) {
+            // Stage 1: Initial Staging — Earth in Lower-Third with "ABOUT" and "US" (p: 0.12 -> 0.24)
+            const t = (p - 0.12) / 0.12
             camera.position.set(0, 0, 6.5)
             camera.fov = 60
             camera.updateProjectionMatrix()
@@ -400,9 +400,9 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               usMesh.position.set(4.2, -0.3, -2.4)
               usMesh.material.opacity = Math.min(1.0, t * 1.5)
             }
-          } else if (p <= 0.48) {
-            // Stage 2 (Step 1): Text Split & Earth Centering (p: 0.32 -> 0.48)
-            const t = (p - 0.32) / 0.16
+          } else if (p <= 0.36) {
+            // Stage 2 (Step 1): Text Split & Earth Centering (p: 0.24 -> 0.36)
+            const t = (p - 0.24) / 0.12
             camera.position.set(0, 0, 6.5)
             camera.fov = 60
             camera.updateProjectionMatrix()
@@ -431,9 +431,9 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               usMesh.position.set(4.2 + easeT * 20.0, -0.3, -2.4)
               usMesh.material.opacity = textOpacity
             }
-          } else if (p <= 0.62) {
-            // Stage 3 (Step 2): Continuous Spin to Kolkata Target Lock (p: 0.48 -> 0.62)
-            const t = (p - 0.48) / 0.14
+          } else if (p <= 0.48) {
+            // Stage 3 (Step 2): Continuous Spin to Kolkata Target Lock (p: 0.36 -> 0.48)
+            const t = (p - 0.36) / 0.12
             camera.position.set(0, 0, 6.5)
             camera.fov = 60
             camera.updateProjectionMatrix()
@@ -449,9 +449,9 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
             if (aboutMesh) aboutMesh.material.opacity = 0.0
             if (usMesh) usMesh.material.opacity = 0.0
-          } else if (p <= 0.76) {
-            // Stage 4 (Step 3): GTA V Satellite Dive into Kolkata (p: 0.62 -> 0.76)
-            const t = (p - 0.62) / 0.14
+          } else if (p <= 0.60) {
+            // Stage 4 (Step 3): GTA V Satellite Dive into Kolkata (p: 0.48 -> 0.60)
+            const t = (p - 0.48) / 0.12
 
             // Camera plunges: Z 6.5 → 4.0
             const plungeT = t * t * (3 - 2 * t)
@@ -475,7 +475,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
             if (aboutMesh) aboutMesh.material.opacity = 0.0
             if (usMesh) usMesh.material.opacity = 0.0
           } else {
-            // Stage 5 & Beyond (p > 0.76): Map reveal & Project Showcase
+            // Stage 5 & Beyond (p > 0.60): Map reveal, Project Showcase & Worked With
             camera.position.set(0, 0, 4.0)
             camera.fov = 14.0
             camera.updateProjectionMatrix()

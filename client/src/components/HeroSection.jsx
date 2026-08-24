@@ -72,8 +72,8 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
           return
         }
 
-        // Scroll exit (p: 0.00 -> 0.16)
-        const t = Math.min(1, p / 0.16)
+        // Scroll exit (p: 0.00 -> 0.12)
+        const t = Math.min(1, p / 0.12)
         const ease = t * t // power2.in
         const op = Math.max(0, 1 - t)
         const blur = (t * 10).toFixed(1)
@@ -100,7 +100,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '560vh',
+        height: '820vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}
