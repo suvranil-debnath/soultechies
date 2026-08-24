@@ -195,6 +195,28 @@ export default function ProjectShowcase({ isPreloaderDone }) {
     return () => st.kill()
   }, [isPreloaderDone])
 
+  // Compute card state (active, peek, hidden) with twin-set synchronization for glitch-free loop transitions
+  const getCardState = (idx, vIdx) => {
+    const directDist = idx - vIdx
+    if (directDist === 0) return 'active'
+    if (directDist === -1 || directDist === 1) return 'peek'
+
+    // Synchronize twin cards in neighboring sets so jump normalizations are 100% invisible
+    const twinDistPlus = idx - (vIdx + N)
+    const twinDistMinus = idx - (vIdx - N)
+    if (twinDistPlus === 0 || twinDistMinus === 0) return 'active'
+    if (
+      twinDistPlus === -1 ||
+      twinDistPlus === 1 ||
+      twinDistMinus === -1 ||
+      twinDistMinus === 1
+    ) {
+      return 'peek'
+    }
+
+    return 'hidden'
+  }
+
   return (
     <div
       ref={containerRef}
@@ -517,9 +539,9 @@ export default function ProjectShowcase({ isPreloaderDone }) {
             }}
           >
             {EXTENDED_PROJECTS.map((proj, idx) => {
-              const isActive = idx === virtualIndex
-              const isPeekTop = idx === virtualIndex - 1
-              const isPeekBottom = idx === virtualIndex + 1
+              const cardState = getCardState(idx, virtualIndex)
+              const isActive = cardState === 'active'
+              const isPeek = cardState === 'peek'
 
               return (
                 <div
@@ -538,7 +560,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                     flexShrink: 0,
                     cursor: !isActive ? 'pointer' : 'default',
                     transform: isActive ? 'scale(1.0)' : 'scale(0.88)',
-                    opacity: isActive ? 1.0 : (isPeekTop || isPeekBottom ? 0.45 : 0.15),
+                    opacity: isActive ? 1.0 : (isPeek ? 0.45 : 0.15),
                     filter: isActive ? 'blur(0px) brightness(1.0)' : 'blur(2px) brightness(0.65)',
                     border: isActive
                       ? '1px solid rgba(255, 255, 255, 0.18)'
@@ -547,7 +569,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                       ? '0 24px 64px rgba(0, 0, 0, 0.8), 0 0 32px rgba(0, 240, 255, 0.12)'
                       : '0 8px 32px rgba(0, 0, 0, 0.6)',
                     transition: 'transform 0.65s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.65s ease, filter 0.65s ease',
-                    zIndex: isActive ? 3 : 1,
+                    zIndex: isActive ? 3 : (isPeek ? 1 : 0),
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -558,7 +580,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.opacity = isPeekTop || isPeekBottom ? '0.45' : '0.15'
+                      e.currentTarget.style.opacity = isPeek ? '0.45' : '0.15'
                       e.currentTarget.style.filter = 'blur(2px) brightness(0.65)'
                       e.currentTarget.style.transform = 'scale(0.88)'
                     }
@@ -567,11 +589,16 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                   <img
                     src={proj.image}
                     alt={proj.title}
+                    loading="eager"
+                    decoding="sync"
+                    draggable={false}
                     style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
                       display: 'block',
+                      userSelect: 'none',
+                      pointerEvents: 'none',
                     }}
                   />
 
