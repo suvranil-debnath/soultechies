@@ -49,13 +49,22 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   const stageRef = useRef(null)
   const canvasRef = useRef(null)
   const splineAppRef = useRef(null)
+  const modelWrapperRef = useRef(null)
+  const marqueeWrapperRef = useRef(null)
+  const titleWrapperRef = useRef(null)
+  const blockerRef = useRef(null)
+
   const [splineLoaded, setSplineLoaded] = useState(false)
   const [hoveredLogo, setHoveredLogo] = useState(null)
 
   // Mouse tracking state for 3D model look-at
   const mouseTargetRef = useRef({ x: 0, y: 0 })
   const mouseCurrentRef = useRef({ x: 0, y: 0 })
+  // When isDivingRef = true, cursor tracking is disengaged and robot lerps to neutral (0, 0)
+  const isDivingRef = useRef(false)
   const rafRef = useRef(null)
+
+  const splineObjectsRef = useRef([])
 
   // Initialize Spline 3D Application
   useEffect(() => {
@@ -71,6 +80,9 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       .then(() => {
         console.log('[Spline 3D] Local scene.splinecode loaded successfully')
         setSplineLoaded(true)
+        try {
+          splineObjectsRef.current = app.getAllObjects ? app.getAllObjects() : []
+        } catch (e) {}
       })
       .catch((err) => {
         console.warn('[Spline 3D] Local file load failed, attempting remote Spline URL...', err)
@@ -79,6 +91,9 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           .then(() => {
             console.log('[Spline 3D] Remote Spline scene loaded successfully')
             setSplineLoaded(true)
+            try {
+              splineObjectsRef.current = app.getAllObjects ? app.getAllObjects() : []
+            } catch (e) {}
           })
           .catch((remoteErr) => {
             console.error('[Spline 3D] Failed to load Spline scene:', remoteErr)
@@ -97,16 +112,35 @@ export default function WorkedWithSection({ isPreloaderDone }) {
     }
   }, [])
 
-  // Real-time smooth cursor tracking with lerping / damping
+  // Real-time smooth cursor tracking with lerping / damping + Capturing Blocker when diving
   useEffect(() => {
+    // Capturing-phase blocker: when diving, intercepts and terminates all pointer/mouse events
+    // before they can ever reach Spline's canvas or runtime event listeners
+    const handleCapturePointer = (e) => {
+      if (isDivingRef.current) {
+        if (!e.__isSyntheticReset) {
+          e.stopImmediatePropagation()
+          e.stopPropagation()
+        }
+      }
+    }
+
+    window.addEventListener('pointermove', handleCapturePointer, true)
+    window.addEventListener('mousemove', handleCapturePointer, true)
+    document.addEventListener('pointermove', handleCapturePointer, true)
+    document.addEventListener('mousemove', handleCapturePointer, true)
+
     const handlePointerMove = (e) => {
+      // If diving/zoomed in, ignore all cursor movement — robot remains completely still
+      if (isDivingRef.current) return
+
       // Normalize mouse to [-1, 1] relative to viewport
       const x = (e.clientX / window.innerWidth) * 2 - 1
       const y = -(e.clientY / window.innerHeight) * 2 + 1
       mouseTargetRef.current = { x, y }
 
-      // Also forward real pointer events directly to the Spline canvas
-      if (canvasRef.current) {
+      // Forward real pointer events directly to the Spline canvas when interactive
+      if (canvasRef.current && !isDivingRef.current) {
         const rect = canvasRef.current.getBoundingClientRect()
         if (
           e.clientX >= rect.left &&
@@ -124,14 +158,21 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
     // Damped animation loop for natural organic look-at motion
     const animateLookAt = () => {
-      const target = mouseTargetRef.current
+      const isDiving = isDivingRef.current
+      const target = isDiving ? { x: 0, y: 0 } : mouseTargetRef.current
       const curr = mouseCurrentRef.current
 
-      // Lerp with 0.08 damping factor
-      curr.x += (target.x - curr.x) * 0.08
-      curr.y += (target.y - curr.y) * 0.08
+      // When diving: instantly lock to exact dead-center (0, 0) — zero movement
+      if (isDiving) {
+        curr.x = 0
+        curr.y = 0
+        mouseTargetRef.current = { x: 0, y: 0 }
+      } else {
+        curr.x += (target.x - curr.x) * 0.08
+        curr.y += (target.y - curr.y) * 0.08
+      }
 
-      // If the Spline app has variables or look-at objects, update them
+      // Feed coordinates to the Spline scene's variable bindings
       if (splineAppRef.current) {
         try {
           splineAppRef.current.setVariable?.('mouseX', curr.x)
@@ -147,15 +188,24 @@ export default function WorkedWithSection({ isPreloaderDone }) {
     rafRef.current = requestAnimationFrame(animateLookAt)
 
     return () => {
+      window.removeEventListener('pointermove', handleCapturePointer, true)
+      window.removeEventListener('mousemove', handleCapturePointer, true)
+      document.removeEventListener('pointermove', handleCapturePointer, true)
+      document.removeEventListener('mousemove', handleCapturePointer, true)
       window.removeEventListener('pointermove', handlePointerMove)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [])
 
-  // Scroll Trigger Choreography:
-  //   - p < 0.85: Completely offscreen at Y = 100%
-  //   - p 0.85 -> 0.94: Stage slides straight up (Y: 100% -> 0%) over pinned Project Showcase
-  //   - p >= 0.94: Stage locked in full view with interactive 3D robot & active marquee
+  // =========================================================================
+  // MASTER SCROLL TRIGGER CHOREOGRAPHY (960vh timeline):
+  //
+  //  p: 0.00 → 0.73  — Offscreen (behind Project Showcase)
+  //  p: 0.73 → 0.78  — Stage slides up (Y: 100% → 0%) as 100% opaque cover
+  //  p: 0.78 → 0.88  — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
+  //  p: 0.88 → 0.94  — Phase A: Marquee + typography exit upward; cursor disengaged; robot lerps to neutral
+  //  p: 0.94 → 1.00  — Phase B: Aggressive camera zoom, robot face fills 100% viewport
+  // =========================================================================
   useEffect(() => {
     if (!isPreloaderDone || !stageRef.current) return
 
@@ -169,26 +219,172 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       onUpdate: (self) => {
         const p = self.progress
 
-        if (p < 0.85) {
+        const modelWrapper = modelWrapperRef.current
+        const marqueeWrapper = marqueeWrapperRef.current
+        const titleWrapper = titleWrapperRef.current
+        const blocker = blockerRef.current
+
+        // ─── PHASE 0: Completely offscreen ─────────────────────────────────
+        if (p < 0.73) {
           stage.style.transform = 'translateY(100%)'
           stage.style.opacity = '0'
           stage.style.visibility = 'hidden'
           stage.style.pointerEvents = 'none'
-        } else if (p <= 0.94) {
-          const t = (p - 0.85) / 0.09
-          // Smooth cubic ease-out
+          isDivingRef.current = false
+          if (blocker) blocker.style.pointerEvents = 'none'
+
+          // Reset all sub-layers to their resting state
+          if (modelWrapper) {
+            modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
+            modelWrapper.style.transformOrigin = '50% 33.5%'
+            modelWrapper.style.opacity = '1'
+          }
+          if (marqueeWrapper) {
+            marqueeWrapper.style.transform = 'translateY(0px)'
+            marqueeWrapper.style.opacity = '1'
+          }
+          if (titleWrapper) {
+            titleWrapper.style.transform = 'translate(-50%, -50%)'
+            titleWrapper.style.opacity = '1'
+          }
+
+        // ─── PHASE 1: Slide-up curtain over Project Showcase ───────────────
+        } else if (p <= 0.78) {
+          const t = (p - 0.73) / 0.05
           const eased = 1 - Math.pow(1 - t, 2.5)
           const translateY = (100 * (1 - eased)).toFixed(2)
 
           stage.style.transform = `translateY(${translateY}%)`
-          stage.style.opacity = '1' // 100% fully opaque solid cover at all times!
+          stage.style.opacity = '1'       // Fully opaque — no see-through at any point!
           stage.style.visibility = 'visible'
-          stage.style.pointerEvents = t > 0.4 ? 'auto' : 'none'
-        } else {
+          stage.style.pointerEvents = t > 0.5 ? 'auto' : 'none'
+          isDivingRef.current = false
+          if (blocker) blocker.style.pointerEvents = 'none'
+
+          if (modelWrapper) {
+            modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
+            modelWrapper.style.transformOrigin = '50% 33.5%'
+            modelWrapper.style.opacity = '1'
+          }
+          if (marqueeWrapper) {
+            marqueeWrapper.style.transform = 'translateY(0px)'
+            marqueeWrapper.style.opacity = '1'
+          }
+          if (titleWrapper) {
+            titleWrapper.style.transform = 'translate(-50%, -50%)'
+            titleWrapper.style.opacity = '1'
+          }
+
+        // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee ────────
+        } else if (p <= 0.88) {
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
+          isDivingRef.current = false
+          if (blocker) blocker.style.pointerEvents = 'none'
+
+          if (canvasRef.current) {
+            canvasRef.current.style.pointerEvents = 'auto'
+          }
+          if (modelWrapper) {
+            modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
+            modelWrapper.style.transformOrigin = '50% 33.5%'
+            modelWrapper.style.opacity = '1'
+            modelWrapper.style.pointerEvents = 'auto'
+          }
+          if (marqueeWrapper) {
+            marqueeWrapper.style.transform = 'translateY(0px)'
+            marqueeWrapper.style.opacity = '1'
+          }
+          if (titleWrapper) {
+            titleWrapper.style.transform = 'translate(-50%, -50%)'
+            titleWrapper.style.opacity = '1'
+          }
+
+        // ─── PHASE A: UI Dismissal + Cursor Disengage + Robot Re-Center ────
+        // Marquee ribbon + typography slide upward off-screen and fade out.
+        // Cursor tracking locks to neutral dead-center (robot faces forward).
+        } else if (p <= 0.94) {
+          const t = (p - 0.88) / 0.06
+          const hermite = t * t * (3 - 2 * t)  // smooth hermite ease
+
+          stage.style.transform = 'translateY(0%)'
+          stage.style.opacity = '1'
+          stage.style.visibility = 'visible'
+          stage.style.pointerEvents = 'auto'
+
+          // Engage dive mode — cursor tracking disengages, robot freezes still
+          isDivingRef.current = true
+          if (blocker) blocker.style.pointerEvents = 'all'
+
+          if (canvasRef.current) {
+            canvasRef.current.style.pointerEvents = 'none'
+          }
+
+          // Marquee slides upward off-screen and fades out
+          const marqueeExitY = -(hermite * 110).toFixed(1)
+          const marqueeOp = Math.max(0, 1 - hermite * 2).toFixed(3)
+          if (marqueeWrapper) {
+            marqueeWrapper.style.transform = `translateY(${marqueeExitY}px)`
+            marqueeWrapper.style.opacity = marqueeOp
+          }
+
+          // Typography also exits upward
+          const titleExitY = -(hermite * 80).toFixed(1)
+          const titleOp = Math.max(0, 1 - hermite * 2.5).toFixed(3)
+          if (titleWrapper) {
+            titleWrapper.style.transform = `translate(-50%, calc(-50% + ${titleExitY}px))`
+            titleWrapper.style.opacity = titleOp
+          }
+
+          // Robot holds resting position — neutral locked
+          if (modelWrapper) {
+            modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
+            modelWrapper.style.transformOrigin = '50% 33.5%'
+            modelWrapper.style.opacity = '1'
+            modelWrapper.style.pointerEvents = 'none'
+          }
+
+        // ─── PHASE B: Robot Face Screen Zoom — Fills Viewport & Stays Still ───
+        // The robot's face monitor screen scales up smoothly to fill the screen.
+        // It stays perfectly centered, completely still, and never disappears.
+        } else {
+          const t = (p - 0.94) / 0.06
+          const zoomEase = t * (2 - t)  // smooth ease-out
+
+          stage.style.transform = 'translateY(0%)'
+          stage.style.opacity = '1'
+          stage.style.visibility = 'visible'
+          stage.style.pointerEvents = 'auto'
+          isDivingRef.current = true
+          if (blocker) blocker.style.pointerEvents = 'all'
+
+          if (canvasRef.current) {
+            canvasRef.current.style.pointerEvents = 'none'
+          }
+
+          // Marquee and title stay hidden
+          if (marqueeWrapper) {
+            marqueeWrapper.style.transform = 'translateY(-110px)'
+            marqueeWrapper.style.opacity = '0'
+          }
+          if (titleWrapper) {
+            titleWrapper.style.opacity = '0'
+          }
+
+          // Robot face zoom: scale 0.84 → 3.88 (a bit bigger to fill screen)
+          // translateY shifts upward from 15% to 8.5%, translateX adjusted slightly right to -1.1vw
+          const scale = (0.84 + zoomEase * 3.04).toFixed(3)
+          const ty = (15.0 - zoomEase * 6.5).toFixed(2)
+          const tx = (-zoomEase * 1.1).toFixed(2)
+
+          if (modelWrapper) {
+            modelWrapper.style.transform = `scale(${scale}) translateX(${tx}vw) translateY(${ty}%)`
+            modelWrapper.style.transformOrigin = '50% 33.5%'  // Center of the robot face screen
+            modelWrapper.style.opacity = '1' // DO NOT disappear — stays 100% visible!
+            modelWrapper.style.pointerEvents = 'none'
+          }
         }
       },
     })
@@ -249,6 +445,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       {/* LAYER 1: GIANT "WORKED WITH" TYPOGRAPHY BEHIND THE 3D ROBOT              */}
       {/* ========================================================================= */}
       <div
+        ref={titleWrapperRef}
         style={{
           position: 'absolute',
           top: '36%',
@@ -259,6 +456,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           zIndex: 1, // Sits BEHIND the Spline 3D canvas (z-index 2)
           pointerEvents: 'none',
           userSelect: 'none',
+          willChange: 'transform, opacity',
         }}
       >
         <h2
@@ -283,6 +481,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       {/* LAYER 2: INTERACTIVE SPLINE 3D ROBOT CANVAS (Sits in front of text)       */}
       {/* ========================================================================= */}
       <div
+        ref={modelWrapperRef}
         style={{
           position: 'absolute',
           inset: 0,
@@ -293,8 +492,9 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           justifyContent: 'center',
           overflow: 'hidden',
           zIndex: 2, // Sits IN FRONT of the WORKED WITH text
-          transform: 'scale(0.94) translateY(20%)',
-          transformOrigin: 'center center',
+          transform: 'scale(0.84) translateY(15%)',
+          transformOrigin: '50% 33.5%',
+          willChange: 'transform, opacity',
         }}
       >
         {/* Loading Spinner / Skeleton before 3D loads */}
@@ -342,12 +542,28 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             cursor: 'grab',
           }}
         />
+
+        {/* Invisible blocker shield: absorbs and intercepts all pointer events when diving */}
+        <div
+          ref={blockerRef}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+          onPointerMove={(e) => {
+            e.stopPropagation()
+            e.preventDefault()
+          }}
+        />
       </div>
 
       {/* ========================================================================= */}
       {/* LAYER 3: TOP UPPER AREA - SLEEK CONTINUOUS BRAND MARQUEE RIBBON           */}
       {/* ========================================================================= */}
       <div
+        ref={marqueeWrapperRef}
         style={{
           position: 'absolute',
           top: 0,
@@ -360,6 +576,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           overflow: 'hidden',
           maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+          willChange: 'transform, opacity',
         }}
       >
         <div

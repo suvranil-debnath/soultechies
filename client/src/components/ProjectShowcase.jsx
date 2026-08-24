@@ -157,7 +157,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
     })
   }
 
-  // Scroll Trigger Reveal: enters at p >= 0.68, fully visible & interactive at p >= 0.76
+  // Scroll Trigger Reveal (960vh timeline): enters at p >= 0.582, fully visible & interactive at p >= 0.650
   useEffect(() => {
     if (!isPreloaderDone || !containerRef.current) return
 
@@ -171,23 +171,23 @@ export default function ProjectShowcase({ isPreloaderDone }) {
       onUpdate: (self) => {
         const p = self.progress
 
-        // p < 0.68: completely hidden
-        // p 0.68 -> 0.76: fade in & slide up into pinned state
-        // p 0.76 -> 0.85: 100% visible & pinned
-        // p > 0.85: pinned in place under WorkedWith slide-up stage
-        if (p < 0.68) {
+        // p < 0.582: completely hidden
+        // p 0.582 -> 0.650: fade in & slide up into pinned state
+        // p 0.650 -> 0.727: 100% visible & pinned
+        // p > 0.727: pinned in place under WorkedWith slide-up stage
+        if (p < 0.582) {
           el.style.opacity = '0'
           el.style.pointerEvents = 'none'
           el.style.transform = 'translateY(36px)'
-        } else if (p <= 0.76) {
-          const t = (p - 0.68) / 0.08
+        } else if (p <= 0.650) {
+          const t = (p - 0.582) / 0.068
           const eased = t * (2 - t) // ease-out
           el.style.opacity = eased.toFixed(4)
           el.style.pointerEvents = eased > 0.4 ? 'auto' : 'none'
           el.style.transform = `translateY(${(36 * (1 - eased)).toFixed(1)}px)`
         } else {
           el.style.opacity = '1'
-          el.style.pointerEvents = p < 0.88 ? 'auto' : 'none'
+          el.style.pointerEvents = p < 0.752 ? 'auto' : 'none'
           el.style.transform = 'translateY(0px)'
         }
       },
