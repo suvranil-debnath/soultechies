@@ -172,6 +172,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         if (p < 0.85) {
           stage.style.transform = 'translateY(100%)'
           stage.style.opacity = '0'
+          stage.style.visibility = 'hidden'
           stage.style.pointerEvents = 'none'
         } else if (p <= 0.94) {
           const t = (p - 0.85) / 0.09
@@ -180,11 +181,13 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           const translateY = (100 * (1 - eased)).toFixed(2)
 
           stage.style.transform = `translateY(${translateY}%)`
-          stage.style.opacity = Math.min(1.0, t * 1.5).toFixed(3)
+          stage.style.opacity = '1' // 100% fully opaque solid cover at all times!
+          stage.style.visibility = 'visible'
           stage.style.pointerEvents = t > 0.4 ? 'auto' : 'none'
         } else {
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
+          stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
         }
       },
@@ -202,14 +205,16 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         width: '100vw',
         height: '100vh',
         zIndex: 30, // Sits on top of ProjectShowcase (z-index 20)
-        background: '#030712',
+        backgroundColor: '#030712',
         color: '#ffffff',
         transform: 'translateY(100%)',
         opacity: 0,
+        visibility: 'hidden',
         pointerEvents: 'none',
         overflow: 'hidden',
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         boxSizing: 'border-box',
+        boxShadow: '0 -24px 80px rgba(0, 0, 0, 1)',
       }}
     >
       {/* ========================================================================= */}
@@ -350,12 +355,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           right: 0,
           zIndex: 10,
           width: '100%',
-          paddingTop: 'clamp(28px, 4vh, 52px)',
-          paddingBottom: '24px',
+          paddingTop: 'clamp(32px, 4.5vh, 56px)',
+          paddingBottom: '36px',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, rgba(3, 7, 18, 0.8) 0%, rgba(3, 7, 18, 0) 100%)',
-          maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
-          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+          maskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)',
         }}
       >
         <div
@@ -376,26 +380,41 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 onMouseEnter={() => setHoveredLogo(`${logo.id}-${idx}`)}
                 onMouseLeave={() => setHoveredLogo(null)}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '14px 24px',
+                  padding: '16px 24px',
                   cursor: 'pointer',
                   transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                  transform: isHovered ? 'scale(1.2)' : 'scale(1.0)',
+                  transform: isHovered ? 'scale(1.15)' : 'scale(1.0)',
                 }}
               >
+                {/* Soft ambient radial glow underlay on hover (zero hard clipping) */}
+                {isHovered && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: '-10px -20px',
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, rgba(0, 240, 255, 0.05) 55%, transparent 75%)',
+                      filter: 'blur(16px)',
+                      pointerEvents: 'none',
+                      zIndex: -1,
+                    }}
+                  />
+                )}
                 <img
                   src={logo.url}
                   alt={logo.name}
                   loading="eager"
                   style={{
-                    height: 'clamp(72px, 9vh, 98px)',
-                    maxWidth: '230px',
+                    height: 'clamp(60px, 7.5vh, 84px)',
+                    maxWidth: '220px',
                     objectFit: 'contain',
                     filter: isHovered
-                      ? 'brightness(0) invert(1) opacity(1) drop-shadow(0 0 20px rgba(0, 240, 255, 0.95)) drop-shadow(0 0 40px rgba(0, 240, 255, 0.6))'
-                      : 'brightness(0) invert(1) opacity(0.6)',
+                      ? 'brightness(0) invert(1) opacity(1) drop-shadow(0 0 12px rgba(0, 240, 255, 0.9))'
+                      : 'brightness(0) invert(1) opacity(0.55)',
                     transition: 'filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                     pointerEvents: 'none',
                   }}
