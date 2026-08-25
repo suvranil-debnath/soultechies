@@ -15,7 +15,6 @@ const logoFiles = import.meta.glob('/public/logos/*.svg', {
 // Extract clean brand names & URLs
 const CLIENT_LOGOS = Object.entries(logoFiles).map(([path, url]) => {
   const filename = path.split('/').pop().replace('.svg', '')
-  // Clean up filename (e.g. "airbnb-2-logo-svgrepo-com" -> "AIRBNB")
   const brandName = filename
     .replace(/-logo|-svgrepo|-com|-[0-9]+/g, '')
     .replace(/-icon/g, '')
@@ -45,6 +44,14 @@ const LOGOS_LIST = CLIENT_LOGOS.length > 0 ? CLIENT_LOGOS : FALLBACK_LOGOS
 // Duplicate list for seamless unbroken horizontal loop
 const MARQUEE_LOGOS = [...LOGOS_LIST, ...LOGOS_LIST, ...LOGOS_LIST]
 
+const SERVICES = [
+  '3D Web Experiences',
+  'Full-Stack Web App',
+  'AI & Automation',
+  'UI/UX & Branding',
+  'Custom Architecture',
+]
+
 export default function WorkedWithSection({ isPreloaderDone }) {
   const stageRef = useRef(null)
   const canvasRef = useRef(null)
@@ -52,19 +59,50 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   const modelWrapperRef = useRef(null)
   const marqueeWrapperRef = useRef(null)
   const titleWrapperRef = useRef(null)
-  const blockerRef = useRef(null)
+  const formWrapperRef = useRef(null)
+  const formCardRef = useRef(null)
 
   const [splineLoaded, setSplineLoaded] = useState(false)
   const [hoveredLogo, setHoveredLogo] = useState(null)
 
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: '',
+    selectedServices: ['3D Web Experiences'],
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
   // Mouse tracking state for 3D model look-at
   const mouseTargetRef = useRef({ x: 0, y: 0 })
   const mouseCurrentRef = useRef({ x: 0, y: 0 })
-  // When isDivingRef = true, cursor tracking is disengaged and robot lerps to neutral (0, 0)
-  const isDivingRef = useRef(false)
   const rafRef = useRef(null)
 
-  const splineObjectsRef = useRef([])
+  // Toggle Service Selection
+  const toggleService = (service) => {
+    setFormData((prev) => {
+      const exists = prev.selectedServices.includes(service)
+      return {
+        ...prev,
+        selectedServices: exists
+          ? prev.selectedServices.filter((s) => s !== service)
+          : [...prev.selectedServices, service],
+      }
+    })
+  }
+
+  // Handle Form Submission
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!formData.name || !formData.email) return
+    setIsSubmitting(true)
+    setTimeout(() => {
+      setIsSubmitting(false)
+      setIsSubmitted(true)
+    }, 1200)
+  }
 
   // Initialize Spline 3D Application
   useEffect(() => {
@@ -80,9 +118,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       .then(() => {
         console.log('[Spline 3D] Local scene.splinecode loaded successfully')
         setSplineLoaded(true)
-        try {
-          splineObjectsRef.current = app.getAllObjects ? app.getAllObjects() : []
-        } catch (e) {}
       })
       .catch((err) => {
         console.warn('[Spline 3D] Local file load failed, attempting remote Spline URL...', err)
@@ -91,9 +126,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           .then(() => {
             console.log('[Spline 3D] Remote Spline scene loaded successfully')
             setSplineLoaded(true)
-            try {
-              splineObjectsRef.current = app.getAllObjects ? app.getAllObjects() : []
-            } catch (e) {}
           })
           .catch((remoteErr) => {
             console.error('[Spline 3D] Failed to load Spline scene:', remoteErr)
@@ -112,35 +144,16 @@ export default function WorkedWithSection({ isPreloaderDone }) {
     }
   }, [])
 
-  // Real-time smooth cursor tracking with lerping / damping + Capturing Blocker when diving
+  // Real-time smooth cursor tracking with lerping / damping
   useEffect(() => {
-    // Capturing-phase blocker: when diving, intercepts and terminates all pointer/mouse events
-    // before they can ever reach Spline's canvas or runtime event listeners
-    const handleCapturePointer = (e) => {
-      if (isDivingRef.current) {
-        if (!e.__isSyntheticReset) {
-          e.stopImmediatePropagation()
-          e.stopPropagation()
-        }
-      }
-    }
-
-    window.addEventListener('pointermove', handleCapturePointer, true)
-    window.addEventListener('mousemove', handleCapturePointer, true)
-    document.addEventListener('pointermove', handleCapturePointer, true)
-    document.addEventListener('mousemove', handleCapturePointer, true)
-
     const handlePointerMove = (e) => {
-      // If diving/zoomed in, ignore all cursor movement — robot remains completely still
-      if (isDivingRef.current) return
-
       // Normalize mouse to [-1, 1] relative to viewport
       const x = (e.clientX / window.innerWidth) * 2 - 1
       const y = -(e.clientY / window.innerHeight) * 2 + 1
       mouseTargetRef.current = { x, y }
 
-      // Forward real pointer events directly to the Spline canvas when interactive
-      if (canvasRef.current && !isDivingRef.current) {
+      // Forward pointer events to Spline canvas for responsive 3D interactive head motion
+      if (canvasRef.current) {
         const rect = canvasRef.current.getBoundingClientRect()
         if (
           e.clientX >= rect.left &&
@@ -158,19 +171,12 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
     // Damped animation loop for natural organic look-at motion
     const animateLookAt = () => {
-      const isDiving = isDivingRef.current
-      const target = isDiving ? { x: 0, y: 0 } : mouseTargetRef.current
+      const target = mouseTargetRef.current
       const curr = mouseCurrentRef.current
 
-      // When diving: instantly lock to exact dead-center (0, 0) — zero movement
-      if (isDiving) {
-        curr.x = 0
-        curr.y = 0
-        mouseTargetRef.current = { x: 0, y: 0 }
-      } else {
-        curr.x += (target.x - curr.x) * 0.08
-        curr.y += (target.y - curr.y) * 0.08
-      }
+      // Smooth damped lerp toward cursor
+      curr.x += (target.x - curr.x) * 0.08
+      curr.y += (target.y - curr.y) * 0.08
 
       // Feed coordinates to the Spline scene's variable bindings
       if (splineAppRef.current) {
@@ -182,16 +188,23 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         }
       }
 
+      // Synchronize form tilt and angle precisely with the robot's 3D head roll, yaw, and pitch
+      if (formCardRef.current) {
+        const rotZ = (curr.x * 0.9).toFixed(2)    // Head roll (matches subtle bezel tilt)
+        const rotY = (curr.x * 1.4).toFixed(2)    // Subtle yaw
+        const rotX = (curr.y * 1.0).toFixed(2)    // Vertical pitch
+        const transX = (curr.x * 3.5).toFixed(1)  // Parallax horizontal micro-shift
+        const transY = (-curr.y * 2.5).toFixed(1) // Parallax vertical micro-shift
+
+        formCardRef.current.style.transform = `perspective(1800px) translate3d(${transX}px, ${transY}px, 0px) rotateZ(${rotZ}deg) rotateY(${rotY}deg) rotateX(${rotX}deg)`
+      }
+
       rafRef.current = requestAnimationFrame(animateLookAt)
     }
 
     rafRef.current = requestAnimationFrame(animateLookAt)
 
     return () => {
-      window.removeEventListener('pointermove', handleCapturePointer, true)
-      window.removeEventListener('mousemove', handleCapturePointer, true)
-      document.removeEventListener('pointermove', handleCapturePointer, true)
-      document.removeEventListener('mousemove', handleCapturePointer, true)
       window.removeEventListener('pointermove', handlePointerMove)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
@@ -203,8 +216,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   //  p: 0.00 → 0.73  — Offscreen (behind Project Showcase)
   //  p: 0.73 → 0.78  — Stage slides up (Y: 100% → 0%) as 100% opaque cover
   //  p: 0.78 → 0.88  — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
-  //  p: 0.88 → 0.94  — Phase A: Marquee + typography exit upward; cursor disengaged; robot lerps to neutral
-  //  p: 0.94 → 1.00  — Phase B: Aggressive camera zoom, robot face fills 100% viewport
+  //  p: 0.88 → 0.94  — Phase A: Marquee + typography exit upward
+  //  p: 0.94 → 1.00  — Phase B: Robot screen zooms in & Contact Form reveals on robot's face
   // =========================================================================
   useEffect(() => {
     if (!isPreloaderDone || !stageRef.current) return
@@ -222,7 +235,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         const modelWrapper = modelWrapperRef.current
         const marqueeWrapper = marqueeWrapperRef.current
         const titleWrapper = titleWrapperRef.current
-        const blocker = blockerRef.current
+        const formWrapper = formWrapperRef.current
 
         // ─── PHASE 0: Completely offscreen ─────────────────────────────────
         if (p < 0.73) {
@@ -230,10 +243,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           stage.style.opacity = '0'
           stage.style.visibility = 'hidden'
           stage.style.pointerEvents = 'none'
-          isDivingRef.current = false
-          if (blocker) blocker.style.pointerEvents = 'none'
 
-          // Reset all sub-layers to their resting state
           if (modelWrapper) {
             modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
             modelWrapper.style.transformOrigin = '50% 33.5%'
@@ -246,6 +256,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           if (titleWrapper) {
             titleWrapper.style.transform = 'translate(-50%, -50%)'
             titleWrapper.style.opacity = '1'
+          }
+          if (formWrapper) {
+            formWrapper.style.opacity = '0'
+            formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
+            formWrapper.style.pointerEvents = 'none'
           }
 
         // ─── PHASE 1: Slide-up curtain over Project Showcase ───────────────
@@ -258,8 +273,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           stage.style.opacity = '1'       // Fully opaque — no see-through at any point!
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = t > 0.5 ? 'auto' : 'none'
-          isDivingRef.current = false
-          if (blocker) blocker.style.pointerEvents = 'none'
 
           if (modelWrapper) {
             modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
@@ -273,6 +286,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           if (titleWrapper) {
             titleWrapper.style.transform = 'translate(-50%, -50%)'
             titleWrapper.style.opacity = '1'
+          }
+          if (formWrapper) {
+            formWrapper.style.opacity = '0'
+            formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
+            formWrapper.style.pointerEvents = 'none'
           }
 
         // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee ────────
@@ -281,17 +299,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
-          isDivingRef.current = false
-          if (blocker) blocker.style.pointerEvents = 'none'
 
-          if (canvasRef.current) {
-            canvasRef.current.style.pointerEvents = 'auto'
-          }
           if (modelWrapper) {
             modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
             modelWrapper.style.transformOrigin = '50% 33.5%'
             modelWrapper.style.opacity = '1'
-            modelWrapper.style.pointerEvents = 'auto'
           }
           if (marqueeWrapper) {
             marqueeWrapper.style.transform = 'translateY(0px)'
@@ -301,26 +313,21 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             titleWrapper.style.transform = 'translate(-50%, -50%)'
             titleWrapper.style.opacity = '1'
           }
+          if (formWrapper) {
+            formWrapper.style.opacity = '0'
+            formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
+            formWrapper.style.pointerEvents = 'none'
+          }
 
-        // ─── PHASE A: UI Dismissal + Cursor Disengage + Robot Re-Center ────
-        // Marquee ribbon + typography slide upward off-screen and fade out.
-        // Cursor tracking locks to neutral dead-center (robot faces forward).
-        } else if (p <= 0.94) {
-          const t = (p - 0.88) / 0.06
+        // ─── PHASE A: UI Dismissal (Marquee + Title exit up) ──────────────
+        } else if (p <= 0.91) {
+          const t = (p - 0.86) / 0.05
           const hermite = t * t * (3 - 2 * t)  // smooth hermite ease
 
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
-
-          // Engage dive mode — cursor tracking disengages, robot freezes still
-          isDivingRef.current = true
-          if (blocker) blocker.style.pointerEvents = 'all'
-
-          if (canvasRef.current) {
-            canvasRef.current.style.pointerEvents = 'none'
-          }
 
           // Marquee slides upward off-screen and fades out
           const marqueeExitY = -(hermite * 110).toFixed(1)
@@ -338,31 +345,27 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             titleWrapper.style.opacity = titleOp
           }
 
-          // Robot holds resting position — neutral locked
           if (modelWrapper) {
             modelWrapper.style.transform = 'scale(0.84) translateY(15%)'
             modelWrapper.style.transformOrigin = '50% 33.5%'
             modelWrapper.style.opacity = '1'
-            modelWrapper.style.pointerEvents = 'none'
+          }
+          if (formWrapper) {
+            formWrapper.style.opacity = '0'
+            formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
+            formWrapper.style.pointerEvents = 'none'
           }
 
-        // ─── PHASE B: Robot Face Screen Zoom — Fills Viewport & Stays Still ───
-        // The robot's face monitor screen scales up smoothly to fill the screen.
-        // It stays perfectly centered, completely still, and never disappears.
+        // ─── PHASE B: Robot Screen Zoom & Contact Form Reveal on Face ───────
         } else {
-          const t = (p - 0.94) / 0.06
+          const rawT = (p - 0.91) / 0.04
+          const t = Math.min(1.0, Math.max(0, rawT))
           const zoomEase = t * (2 - t)  // smooth ease-out
 
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
-          isDivingRef.current = true
-          if (blocker) blocker.style.pointerEvents = 'all'
-
-          if (canvasRef.current) {
-            canvasRef.current.style.pointerEvents = 'none'
-          }
 
           // Marquee and title stay hidden
           if (marqueeWrapper) {
@@ -373,17 +376,28 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             titleWrapper.style.opacity = '0'
           }
 
-          // Robot face zoom: scale 0.84 → 3.88 (a bit bigger to fill screen)
-          // translateY shifts upward from 15% to 8.5%, translateX adjusted slightly right to -1.1vw
+          // Robot face zoom: scale 0.84 → 3.88
           const scale = (0.84 + zoomEase * 3.04).toFixed(3)
           const ty = (15.0 - zoomEase * 6.5).toFixed(2)
           const tx = (-zoomEase * 1.1).toFixed(2)
 
           if (modelWrapper) {
             modelWrapper.style.transform = `scale(${scale}) translateX(${tx}vw) translateY(${ty}%)`
-            modelWrapper.style.transformOrigin = '50% 33.5%'  // Center of the robot face screen
-            modelWrapper.style.opacity = '1' // DO NOT disappear — stays 100% visible!
-            modelWrapper.style.pointerEvents = 'none'
+            modelWrapper.style.transformOrigin = '50% 33.5%'
+            modelWrapper.style.opacity = '1'
+          }
+
+          // Contact Form on Robot Screen: fades and scales in as zoom completes
+          if (formWrapper) {
+            const formT = Math.max(0, (t - 0.15) / 0.85)
+            const formEase = formT * (2 - formT)
+            const formOp = Math.min(1.0, formEase * 1.25).toFixed(3)
+            const formY = (24 * (1 - formEase)).toFixed(1)
+            const formScale = (0.94 + formEase * 0.06).toFixed(3)
+
+            formWrapper.style.opacity = formOp
+            formWrapper.style.transform = `translate(calc(-50% + ${tx}vw), calc(-50% + ${formY}px)) scale(${formScale})`
+            formWrapper.style.pointerEvents = formEase > 0.5 ? 'auto' : 'none'
           }
         }
       },
@@ -421,7 +435,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           position: 'absolute',
           inset: 0,
           pointerEvents: 'none',
-          background: 'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(0, 240, 255, 0.07) 0%, rgba(3, 7, 18, 0.95) 75%, #030712 100%)',
+          background: 'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(168, 85, 247, 0.08) 0%, rgba(3, 7, 18, 0.95) 75%, #030712 100%)',
           zIndex: 0,
         }}
       />
@@ -434,7 +448,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           width: '75vw',
           height: '50vh',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 240, 255, 0.10) 0%, rgba(56, 189, 248, 0.03) 50%, transparent 80%)',
+          background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(236, 72, 153, 0.04) 50%, transparent 80%)',
           filter: 'blur(50px)',
           pointerEvents: 'none',
           zIndex: 0,
@@ -470,10 +484,10 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
             color: 'rgba(255, 255, 255, 0.12)',
-            textShadow: '0 0 80px rgba(0, 240, 255, 0.25)',
+            textShadow: '0 0 80px rgba(168, 85, 247, 0.25)',
           }}
         >
-          WORKED <span style={{ color: 'rgba(0, 240, 255, 0.35)', textShadow: '0 0 100px rgba(0, 240, 255, 0.6)' }}>WITH</span>
+          WORKED <span style={{ color: 'rgba(168, 85, 247, 0.35)', textShadow: '0 0 100px rgba(168, 85, 247, 0.6)' }}>WITH</span>
         </h2>
       </div>
 
@@ -511,7 +525,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
               fontFamily: "'Space Grotesk', monospace",
               fontSize: '12px',
               letterSpacing: '0.18em',
-              color: 'rgba(0, 240, 255, 0.7)',
+              color: 'rgba(168, 85, 247, 0.8)',
               zIndex: 3,
             }}
           >
@@ -520,8 +534,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                border: '2px solid rgba(0, 240, 255, 0.2)',
-                borderTopColor: '#00f0ff',
+                border: '2px solid rgba(168, 85, 247, 0.2)',
+                borderTopColor: '#a855f7',
                 animation: 'spin 1s linear infinite',
               }}
             />
@@ -540,21 +554,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             opacity: splineLoaded ? 1 : 0,
             transition: 'opacity 0.8s ease',
             cursor: 'grab',
-          }}
-        />
-
-        {/* Invisible blocker shield: absorbs and intercepts all pointer events when diving */}
-        <div
-          ref={blockerRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 10,
-            pointerEvents: 'none',
-          }}
-          onPointerMove={(e) => {
-            e.stopPropagation()
-            e.preventDefault()
           }}
         />
       </div>
@@ -614,7 +613,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                       position: 'absolute',
                       inset: '-10px -20px',
                       borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, rgba(0, 240, 255, 0.05) 55%, transparent 75%)',
+                      background: 'radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(236, 72, 153, 0.05) 55%, transparent 75%)',
                       filter: 'blur(16px)',
                       pointerEvents: 'none',
                       zIndex: -1,
@@ -630,7 +629,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                     maxWidth: '220px',
                     objectFit: 'contain',
                     filter: isHovered
-                      ? 'brightness(0) invert(1) opacity(1) drop-shadow(0 0 12px rgba(0, 240, 255, 0.9))'
+                      ? 'brightness(0) invert(1) opacity(1) drop-shadow(0 0 12px rgba(168, 85, 247, 0.9))'
                       : 'brightness(0) invert(1) opacity(0.55)',
                     transition: 'filter 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
                     pointerEvents: 'none',
@@ -642,7 +641,458 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         </div>
       </div>
 
-      {/* Marquee and Spinner Keyframes */}
+      {/* ========================================================================= */}
+      {/* LAYER 4: ROBOT MONITOR SCREEN DISPLAY — INTERACTIVE CONTACT US FORM       */}
+      {/* ========================================================================= */}
+      <div
+        ref={formWrapperRef}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 25,
+          width: 'clamp(340px, 92vw, 840px)',
+          maxHeight: '86vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity: 0,
+          pointerEvents: 'none',
+          boxSizing: 'border-box',
+          willChange: 'transform, opacity',
+        }}
+      >
+        {/* The Robot's Screen Monitor Card (100% Solid Opaque Backdrop) */}
+        <div
+          ref={formCardRef}
+          style={{
+            position: 'relative',
+            width: '100%',
+            backgroundColor: '#07071c',
+            background: 'radial-gradient(135% 100% at 50% 0%, #1c113e 0%, #0d0a27 45%, #060618 100%)',
+            border: '1px solid rgba(168, 85, 247, 0.42)',
+            borderRadius: 'clamp(24px, 3.5vw, 40px)',
+            boxShadow: '0 24px 80px rgba(0, 0, 0, 0.95), 0 0 60px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+            padding: 'clamp(22px, 3.4vh, 38px) clamp(22px, 3.8vw, 46px)',
+            overflowY: 'auto',
+            maxHeight: '82vh',
+            boxSizing: 'border-box',
+            willChange: 'transform',
+          }}
+        >
+          {/* Subtle Cyber CRT Scanlines Layer */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 'inherit',
+              pointerEvents: 'none',
+              background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(168, 85, 247, 0.04) 50%)',
+              backgroundSize: '100% 4px',
+              zIndex: 0,
+            }}
+          />
+
+          {/* Top Status Header */}
+          <div
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: '14px',
+              marginBottom: '16px',
+              borderBottom: '1px solid rgba(168, 85, 247, 0.22)',
+              fontFamily: "'Space Grotesk', monospace",
+              fontSize: '11px',
+              letterSpacing: '0.18em',
+              color: 'rgba(192, 132, 252, 0.9)',
+              zIndex: 1,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  background: '#a855f7',
+                  boxShadow: '0 0 10px #a855f7, 0 0 20px #ec4899',
+                  animation: 'pulseGlow 2s infinite',
+                }}
+              />
+              NEURAL INTERFACE // READY
+            </div>
+            <div style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: '10px' }}>
+              SYS.LOC: KOLKATA [22.57° N]
+            </div>
+          </div>
+
+          {/* Screen Title & Subtitle */}
+          <div style={{ position: 'relative', marginBottom: '20px', zIndex: 1 }}>
+            <h3
+              style={{
+                fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(24px, 3vw, 34px)',
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
+                margin: '0 0 6px 0',
+                background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #f472b6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              INITIALIZE TRANSMISSION
+            </h3>
+            <p
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(12px, 1.2vw, 14px)',
+                color: 'rgba(255, 255, 255, 0.65)',
+                margin: 0,
+                lineHeight: 1.4,
+              }}
+            >
+              Have a visionary project? Transmit your directive directly to our core.
+            </p>
+          </div>
+
+          {isSubmitted ? (
+            /* Success Feedback State */
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '36px 16px',
+                textAlign: 'center',
+                gap: '14px',
+                zIndex: 1,
+              }}
+            >
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '50%',
+                  background: '#130d2d',
+                  border: '1px solid rgba(168, 85, 247, 0.6)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 30px rgba(168, 85, 247, 0.4)',
+                }}
+              >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h4
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: '22px',
+                  fontWeight: 700,
+                  color: '#ffffff',
+                  margin: 0,
+                }}
+              >
+                TRANSMISSION ENCRYPTED & RECEIVED
+              </h4>
+              <p
+                style={{
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  maxWidth: '380px',
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}
+              >
+                Your transmission has been linked to our neural network. Our architects will contact you within 24 hours.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSubmitted(false)
+                  setFormData({ name: '', email: '', message: '', selectedServices: ['3D Web Experiences'] })
+                }}
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 22px',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(168, 85, 247, 0.5)',
+                  background: '#150f33',
+                  color: '#d8b4fe',
+                  fontFamily: "'Space Grotesk', monospace",
+                  fontSize: '11px',
+                  letterSpacing: '0.14em',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#21164e'
+                  e.currentTarget.style.boxShadow = '0 0 20px rgba(168, 85, 247, 0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#150f33'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+              >
+                TRANSMIT ANOTHER MESSAGE
+              </button>
+            </div>
+          ) : (
+            /* Main Form */
+            <form onSubmit={handleSubmit} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '16px', zIndex: 1 }}>
+              {/* Row 1: Name & Email */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: '16px',
+                }}
+              >
+                {/* Identifier / Name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label
+                    style={{
+                      fontFamily: "'Space Grotesk', monospace",
+                      fontSize: '10px',
+                      letterSpacing: '0.16em',
+                      color: 'rgba(192, 132, 252, 0.9)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    IDENTIFIER / NAME
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter your name"
+                    style={{
+                      padding: '13px 16px',
+                      borderRadius: '12px',
+                      background: '#0a081e',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      color: '#ffffff',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#a855f7'
+                      e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
+
+                {/* Comms / Email */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label
+                    style={{
+                      fontFamily: "'Space Grotesk', monospace",
+                      fontSize: '10px',
+                      letterSpacing: '0.16em',
+                      color: 'rgba(192, 132, 252, 0.9)',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    COMMS / EMAIL
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="name@organization.com"
+                    style={{
+                      padding: '13px 16px',
+                      borderRadius: '12px',
+                      background: '#0a081e',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      color: '#ffffff',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontSize: '13px',
+                      outline: 'none',
+                      transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#a855f7'
+                      e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                      e.target.style.boxShadow = 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Service Selection Pills */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label
+                  style={{
+                    fontFamily: "'Space Grotesk', monospace",
+                    fontSize: '10px',
+                    letterSpacing: '0.16em',
+                    color: 'rgba(192, 132, 252, 0.9)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  TARGET SCOPE / EXPERTISE
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {SERVICES.map((service) => {
+                    const isSelected = formData.selectedServices.includes(service)
+                    return (
+                      <button
+                        key={service}
+                        type="button"
+                        onClick={() => toggleService(service)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '999px',
+                          border: isSelected
+                            ? '1px solid #c084fc'
+                            : '1px solid rgba(168, 85, 247, 0.26)',
+                          background: isSelected
+                            ? 'linear-gradient(135deg, #581c87 0%, #831843 100%)'
+                            : '#0c0a22',
+                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
+                          fontFamily: "'Space Grotesk', sans-serif",
+                          fontSize: '11px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          transition: 'all 0.25s ease',
+                          boxShadow: isSelected ? '0 0 16px rgba(168, 85, 247, 0.35)' : 'none',
+                        }}
+                      >
+                        {isSelected && <span style={{ marginRight: '5px', color: '#d8b4fe' }}>✓</span>}
+                        {service}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Row 3: Message / Payload */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label
+                  style={{
+                    fontFamily: "'Space Grotesk', monospace",
+                    fontSize: '10px',
+                    letterSpacing: '0.16em',
+                    color: 'rgba(192, 132, 252, 0.9)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  TRANSMISSION PAYLOAD / MESSAGE
+                </label>
+                <textarea
+                  rows="3"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Outline your vision, timeline, questions or project requirements..."
+                  style={{
+                    padding: '13px 16px',
+                    borderRadius: '12px',
+                    background: '#0a081e',
+                    border: '1px solid rgba(168, 85, 247, 0.3)',
+                    color: '#ffffff',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: '13px',
+                    lineHeight: 1.4,
+                    resize: 'vertical',
+                    outline: 'none',
+                    transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#a855f7'
+                    e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                    e.target.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              {/* Row 4: Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                style={{
+                  marginTop: '6px',
+                  padding: '15px 32px',
+                  borderRadius: '14px',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #00f0ff 100%)',
+                  color: '#ffffff',
+                  fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.55), 0 0 20px rgba(0, 240, 255, 0.3)',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                  opacity: isSubmitting ? 0.75 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSubmitting) {
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 12px 42px rgba(124, 58, 237, 0.75), 0 0 30px rgba(0, 240, 255, 0.5)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0px)'
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(124, 58, 237, 0.55), 0 0 20px rgba(0, 240, 255, 0.3)'
+                }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        borderRadius: '50%',
+                        border: '2px solid #ffffff',
+                        borderTopColor: 'transparent',
+                        animation: 'spin 0.8s linear infinite',
+                      }}
+                    />
+                    TRANSMITTING PAYLOAD...
+                  </>
+                ) : (
+                  <>
+                    TRANSMIT DIRECTIVE
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* Marquee, Pulsing and Spinner Keyframes */}
       <style>{`
         @keyframes marqueeScroll {
           0% {
@@ -658,6 +1108,16 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        @keyframes pulseGlow {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.3);
+          }
         }
       `}</style>
     </section>

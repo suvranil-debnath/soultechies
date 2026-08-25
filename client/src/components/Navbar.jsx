@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 // Brand Logo component loading /logo.png
 function BrandLogo({ height = 44, style = {} }) {
@@ -115,6 +118,35 @@ export default function Navbar({ isPreloaderDone }) {
       '-=0.4'
     )
   }, [isPreloaderDone])
+
+  // Hide Navbar when footer curtain slides up (p >= 0.95)
+  useEffect(() => {
+    if (!isPreloaderDone || !wrapperRef.current) return
+
+    const wrapper = wrapperRef.current
+
+    const st = ScrollTrigger.create({
+      trigger: document.body,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true,
+      onUpdate: (self) => {
+        const p = self.progress
+        if (p >= 0.945) {
+          const t = Math.min(1.0, (p - 0.945) / 0.03)
+          wrapper.style.transform = `translateX(-50%) translateY(${t * 80}px)`
+          wrapper.style.opacity = `${Math.max(0, 1 - t * 2)}`
+          wrapper.style.pointerEvents = 'none'
+        } else if (hasEnteredRef.current && !isMenuOpen) {
+          wrapper.style.transform = 'translateX(-50%) translateY(0px)'
+          wrapper.style.opacity = '1'
+          wrapper.style.pointerEvents = 'auto'
+        }
+      },
+    })
+
+    return () => st.kill()
+  }, [isPreloaderDone, isMenuOpen])
 
   // Morphing Menu Expansion Transition (Pill -> Menu Card)
   const handleOpenMenu = () => {

@@ -8,6 +8,7 @@ import HeroSection from './components/HeroSection'
 import KolkataMapOverlay from './components/KolkataMapOverlay'
 import ProjectShowcase from './components/ProjectShowcase'
 import WorkedWithSection from './components/WorkedWithSection'
+import FooterSection from './components/FooterSection'
 import Navbar from './components/Navbar'
 import { useScrollTimeline } from './hooks/useScrollTimeline'
 
@@ -70,6 +71,7 @@ function App() {
         <KolkataMapOverlay isPreloaderDone={isPreloaderDone} />
         <ProjectShowcase isPreloaderDone={isPreloaderDone} />
         <WorkedWithSection isPreloaderDone={isPreloaderDone} />
+        <FooterSection isPreloaderDone={isPreloaderDone} />
       </div>
 
       {/* Layer 2: Preloader overlay (highest, removed on complete) */}
