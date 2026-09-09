@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 *, *::before, *::after {
@@ -90,4 +90,285 @@ html.lenis, html.lenis body {
 
 ::-webkit-scrollbar-corner {
   background: #000000;
+}
+
+/* ==========================================================================
+   Hero Section Reference Cards (Exact Match to User Reference Photo)
+   ========================================================================== */
+.hero-cards-cluster {
+  position: fixed;
+  bottom: clamp(20px, 3vh, 36px);
+  right: clamp(18px, 2.2vw, 36px);
+  z-index: 25;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+
+.hero-cards-cluster-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+/* Card 1: Left Card (Matches Right Card's solid obsidian style & exact height) */
+.hero-ref-card-left {
+  width: clamp(200px, 14vw, 235px);
+  height: clamp(174px, 12.4vw, 196px);
+  padding: 16px 18px 14px 18px;
+  border-radius: 26px;
+  background: #080910;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: default;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.28s ease,
+              box-shadow 0.28s ease;
+  user-select: none;
+}
+
+.hero-ref-card-left:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.85);
+}
+
+/* Card 2: Right Card (Solid Obsidian Black) */
+.hero-ref-card-right {
+  position: relative;
+  width: clamp(150px, 10.8vw, 178px);
+  height: clamp(174px, 12.4vw, 196px);
+  padding: 14px 14px 12px 14px;
+  border-radius: 26px;
+  background: #080910;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: default;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.28s ease,
+              box-shadow 0.28s ease;
+  user-select: none;
+  overflow: hidden;
+}
+
+.hero-ref-card-right:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.85);
+}
+
+/* Squircle buttons in Card 1 (matching dark squircle styling) */
+.hero-ref-squircle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 11px;
+  border-radius: 13px;
+  background: #0e0f18;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.hero-ref-squircle-btn:hover {
+  background: #161724;
+  transform: scale(1.03);
+}
+
+/* Circular Arrow Button in Card 2 (compact size matching ref) */
+.hero-ref-circle-btn {
+  position: absolute;
+  bottom: 11px;
+  right: 11px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #d4d4de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  z-index: 5;
+}
+
+.hero-ref-circle-btn:hover {
+  transform: scale(1.12);
+  background: #ffffff;
+  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.25);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .hero-cards-cluster {
+    right: 16px !important;
+    bottom: 96px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero-cards-cluster-inner {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 8px !important;
+  }
+  .hero-ref-card-left {
+    width: 175px;
+    height: 168px;
+    padding: 14px;
+    border-radius: 22px;
+  }
+  .hero-ref-card-right {
+    width: 155px;
+    height: 168px;
+    padding: 12px;
+    border-radius: 22px;
+  }
+}
+
+/* ==========================================================================
+   Top-Right Services Indicator (Reference Match: APP | WEBAPP | SOLUTIONS)
+   ========================================================================== */
+.hero-top-nav {
+  position: fixed;
+  top: clamp(26px, 3.8vh, 44px);
+  right: clamp(24px, 3.8vw, 56px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.3vw, 18px);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(14px, 1.05vw, 16.5px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  will-change: transform, opacity, filter;
+  user-select: none;
+  pointer-events: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hero-top-nav-item {
+  cursor: default;
+  transition: color 0.22s ease, text-shadow 0.22s ease, transform 0.22s ease;
+  display: inline-block;
+}
+
+.hero-top-nav-item:hover {
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.hero-top-nav-divider {
+  color: rgba(255, 255, 255, 0.24);
+  font-weight: 300;
+  font-size: 0.9em;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .hero-top-nav {
+    top: 18px;
+    right: 18px;
+    font-size: 12px;
+    gap: 9px;
+    letter-spacing: 0.13em;
+  }
+}
+
+/* ==========================================================================
+   Hero Supporting Subtext & Action Group (Reference Match)
+   ========================================================================== */
+.hero-subtext-cluster {
+  position: fixed;
+  left: clamp(24px, 3.8vw, 56px);
+  bottom: clamp(28px, 4.2vh, 48px);
+  z-index: 25;
+  pointer-events: auto;
+  user-select: none;
+  max-width: clamp(280px, 23vw, 360px);
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+
+.hero-subtext-paragraph {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(13px, 0.94vw, 15px);
+  font-weight: 400;
+  line-height: 1.52;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: -0.01em;
+  margin: 0 0 clamp(10px, 1.3vh, 13px) 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hero-subtext-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.hero-subtext-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(40px, 2.9vw, 46px);
+  height: clamp(40px, 2.9vw, 46px);
+  border-radius: 14px;
+  background: #10121a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s ease, color 0.22s ease;
+}
+
+.hero-subtext-icon-btn:hover {
+  background: #181b28;
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.hero-subtext-footnote {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: clamp(11.5px, 0.8vw, 12.5px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .hero-subtext-cluster {
+    left: 18px !important;
+    bottom: auto !important;
+    top: clamp(80px, 14vh, 120px) !important;
+    max-width: 320px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-subtext-cluster {
+    max-width: calc(100vw - 36px) !important;
+  }
+  .hero-subtext-paragraph {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+  }
 }
