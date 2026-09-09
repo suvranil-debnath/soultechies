@@ -400,9 +400,10 @@ export default function Navbar({ isPreloaderDone }) {
   if (!isPreloaderDone) return null
 
   const mainLinks = [
-    { label: 'Features', href: '#features' },
-    { label: 'Referral', href: '#referral' },
-    { label: 'Pricing', href: '#pricing' },
+    { label: 'About Us', href: '#about', progress: 0.18 },
+    { label: 'Services', href: '#services', progress: 0.38 },
+    { label: 'Our Work', href: '#our-work', progress: 0.54 },
+    { label: 'Worked With', href: '#worked-with', progress: 0.82 },
   ]
 
   const leftSecondary = ['Support', 'Terms of Use', 'Policy Privacy']
@@ -514,13 +515,17 @@ export default function Navbar({ isPreloaderDone }) {
             {/* Right: Dark Pill CTA Button ("Contact") */}
             <div ref={rightContentRef} style={{ willChange: 'opacity', zIndex: 10 }}>
               <button
+                onClick={() => {
+                  const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+                  window.scrollTo({ top: maxScroll * 0.98, behavior: 'smooth' })
+                }}
                 style={{
                   padding: '10px 24px',
                   borderRadius: '999px',
                   background: '#1c1c22',
                   border: 'none',
                   color: '#ffffff',
-                  fontFamily: "'Space Grotesk', 'Outfit', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', 'Space Grotesk', 'Outfit', sans-serif",
                   fontSize: '14px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -567,12 +572,24 @@ export default function Navbar({ isPreloaderDone }) {
               }}
             >
               <span
+                onClick={() => {
+                  handleCloseMenu()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
                 style={{
-                  fontFamily: "'Space Grotesk', 'Outfit', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', 'Space Grotesk', 'Outfit', sans-serif",
                   fontSize: '28px',
                   fontWeight: 500,
                   color: '#6b6b78',
                   letterSpacing: '-0.02em',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#1c1c22'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#6b6b78'
                 }}
               >
                 Home
@@ -592,9 +609,16 @@ export default function Navbar({ isPreloaderDone }) {
                 <a
                   key={link.label}
                   href={link.href}
-                  onClick={handleCloseMenu}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleCloseMenu()
+                    if (link.progress !== undefined) {
+                      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+                      window.scrollTo({ top: maxScroll * link.progress, behavior: 'smooth' })
+                    }
+                  }}
                   style={{
-                    fontFamily: "'Space Grotesk', 'Outfit', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', 'Space Grotesk', 'Outfit', sans-serif",
                     fontSize: '28px',
                     fontWeight: 600,
                     color: '#1c1c22',
@@ -603,6 +627,7 @@ export default function Navbar({ isPreloaderDone }) {
                     lineHeight: 1.2,
                     transition: 'transform 0.2s, color 0.2s',
                     display: 'inline-block',
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = '#50505e'
