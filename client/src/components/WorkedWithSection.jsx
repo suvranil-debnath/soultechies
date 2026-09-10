@@ -5,44 +5,21 @@ import { Application } from '@splinetool/runtime'
 
 gsap.registerPlugin(ScrollTrigger)
 
-// Auto-discover all client logo SVGs from /public/logos/ dynamically without hardcoding names
-const logoFiles = import.meta.glob('/public/logos/*.svg', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-})
-
-// Extract clean brand names & URLs
-const CLIENT_LOGOS = Object.entries(logoFiles).map(([path, url]) => {
-  const filename = path.split('/').pop().replace('.svg', '')
-  const brandName = filename
-    .replace(/-logo|-svgrepo|-com|-[0-9]+/g, '')
-    .replace(/-icon/g, '')
-    .toUpperCase()
-  return {
-    id: path,
-    name: brandName || 'CLIENT',
-    url: url || path.replace('/public', ''),
-  }
-})
-
-// Fallback in case globbing returned empty array
-const FALLBACK_LOGOS = [
-  { id: '1', name: 'AIRBNB', url: '/logos/airbnb-2-logo-svgrepo-com.svg' },
-  { id: '2', name: 'AMAZON', url: '/logos/amazon-icon-logo-svgrepo-com.svg' },
-  { id: '3', name: 'APPLE', url: '/logos/apple-logo-svgrepo-com.svg' },
-  { id: '4', name: 'ETHEREUM', url: '/logos/ethereum-logo-svgrepo-com.svg' },
-  { id: '5', name: 'FACEBOOK', url: '/logos/facebook-icon-logo-svgrepo-com.svg' },
-  { id: '6', name: 'GOOGLE', url: '/logos/google-icon-logo-svgrepo-com.svg' },
-  { id: '7', name: 'NETFLIX', url: '/logos/netflix-2-logo-svgrepo-com.svg' },
-  { id: '8', name: 'TINDER', url: '/logos/tinder-1-logo-svgrepo-com.svg' },
-  { id: '9', name: 'YOUTUBE', url: '/logos/youtube-icon-logo-svgrepo-com.svg' },
+// Client logo SVGs served directly from public directory (/logos/...)
+const CLIENT_LOGOS = [
+  { id: 'airbnb', name: 'AIRBNB', url: '/logos/airbnb-2-logo-svgrepo-com.svg' },
+  { id: 'amazon', name: 'AMAZON', url: '/logos/amazon-icon-logo-svgrepo-com.svg' },
+  { id: 'apple', name: 'APPLE', url: '/logos/apple-logo-svgrepo-com.svg' },
+  { id: 'ethereum', name: 'ETHEREUM', url: '/logos/ethereum-logo-svgrepo-com.svg' },
+  { id: 'facebook', name: 'FACEBOOK', url: '/logos/facebook-icon-logo-svgrepo-com.svg' },
+  { id: 'google', name: 'GOOGLE', url: '/logos/google-icon-logo-svgrepo-com.svg' },
+  { id: 'netflix', name: 'NETFLIX', url: '/logos/netflix-2-logo-svgrepo-com.svg' },
+  { id: 'tinder', name: 'TINDER', url: '/logos/tinder-1-logo-svgrepo-com.svg' },
+  { id: 'youtube', name: 'YOUTUBE', url: '/logos/youtube-icon-logo-svgrepo-com.svg' },
 ]
 
-const LOGOS_LIST = CLIENT_LOGOS.length > 0 ? CLIENT_LOGOS : FALLBACK_LOGOS
-
 // Duplicate list for seamless unbroken horizontal loop
-const MARQUEE_LOGOS = [...LOGOS_LIST, ...LOGOS_LIST, ...LOGOS_LIST]
+const MARQUEE_LOGOS = [...CLIENT_LOGOS, ...CLIENT_LOGOS, ...CLIENT_LOGOS]
 
 const SERVICES = [
   '3D Web Experiences',
@@ -211,13 +188,13 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   }, [])
 
   // =========================================================================
-  // MASTER SCROLL TRIGGER CHOREOGRAPHY (960vh timeline):
+  // MASTER SCROLL TRIGGER CHOREOGRAPHY (1260vh timeline):
   //
-  //  p: 0.00 → 0.73  — Offscreen (behind Project Showcase)
-  //  p: 0.73 → 0.78  — Stage slides up (Y: 100% → 0%) as 100% opaque cover
-  //  p: 0.78 → 0.88  — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
-  //  p: 0.88 → 0.94  — Phase A: Marquee + typography exit upward
-  //  p: 0.94 → 1.00  — Phase B: Robot screen zooms in & Contact Form reveals on robot's face
+  //  p: 0.00 → 0.80  — Offscreen (behind Project Showcase)
+  //  p: 0.80 → 0.84  — Stage slides up (Y: 100% → 0%) as 100% opaque cover
+  //  p: 0.84 → 0.91  — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
+  //  p: 0.91 → 0.94  — Phase A: Marquee + typography exit upward
+  //  p: 0.94 → 0.97  — Phase B: Robot screen zooms in & Contact Form reveals on robot's face
   // =========================================================================
   useEffect(() => {
     if (!isPreloaderDone || !stageRef.current) return
@@ -238,7 +215,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         const formWrapper = formWrapperRef.current
 
         // ─── PHASE 0: Completely offscreen ─────────────────────────────────
-        if (p < 0.73) {
+        if (p < 0.80) {
           stage.style.transform = 'translateY(100%)'
           stage.style.opacity = '0'
           stage.style.visibility = 'hidden'
@@ -264,8 +241,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE 1: Slide-up curtain over Project Showcase ───────────────
-        } else if (p <= 0.78) {
-          const t = (p - 0.73) / 0.05
+        } else if (p <= 0.84) {
+          const t = (p - 0.80) / 0.04
           const eased = 1 - Math.pow(1 - t, 2.5)
           const translateY = (100 * (1 - eased)).toFixed(2)
 
@@ -294,7 +271,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee ────────
-        } else if (p <= 0.88) {
+        } else if (p <= 0.91) {
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
@@ -320,8 +297,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE A: UI Dismissal (Marquee + Title exit up) ──────────────
-        } else if (p <= 0.91) {
-          const t = (p - 0.86) / 0.05
+        } else if (p <= 0.94) {
+          const t = (p - 0.91) / 0.03
           const hermite = t * t * (3 - 2 * t)  // smooth hermite ease
 
           stage.style.transform = 'translateY(0%)'
@@ -358,7 +335,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
         // ─── PHASE B: Robot Screen Zoom & Contact Form Reveal on Face ───────
         } else {
-          const rawT = (p - 0.91) / 0.04
+          const rawT = (p - 0.94) / 0.03
           const t = Math.min(1.0, Math.max(0, rawT))
           const zoomEase = t * (2 - t)  // smooth ease-out
 

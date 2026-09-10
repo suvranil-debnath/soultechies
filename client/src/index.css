@@ -112,11 +112,11 @@ html.lenis, html.lenis body {
   pointer-events: auto;
 }
 
-/* Card 1: Left Card (Matches Right Card's solid obsidian style & exact height) */
+/* Card 1: Left Card (Solid Obsidian Black) */
 .hero-ref-card-left {
-  width: clamp(200px, 14vw, 235px);
+  width: clamp(170px, 12.2vw, 202px);
   height: clamp(174px, 12.4vw, 196px);
-  padding: 16px 18px 14px 18px;
+  padding: 16px 16px 14px 16px;
   border-radius: 26px;
   background: #080910;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -125,16 +125,7 @@ html.lenis, html.lenis body {
   flex-direction: column;
   justify-content: space-between;
   cursor: default;
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-              border-color 0.28s ease,
-              box-shadow 0.28s ease;
   user-select: none;
-}
-
-.hero-ref-card-left:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.85);
 }
 
 /* Card 2: Right Card (Solid Obsidian Black) */
@@ -151,17 +142,8 @@ html.lenis, html.lenis body {
   flex-direction: column;
   justify-content: space-between;
   cursor: default;
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-              border-color 0.28s ease,
-              box-shadow 0.28s ease;
   user-select: none;
   overflow: hidden;
-}
-
-.hero-ref-card-right:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.85);
 }
 
 /* Squircle buttons in Card 1 (matching dark squircle styling) */
@@ -175,12 +157,8 @@ html.lenis, html.lenis body {
   background: #0e0f18;
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.hero-ref-squircle-btn:hover {
-  background: #161724;
-  transform: scale(1.03);
+  cursor: default;
+  user-select: none;
 }
 
 /* Circular Arrow Button in Card 2 (compact size matching ref) */
@@ -196,15 +174,9 @@ html.lenis, html.lenis body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
+  user-select: none;
   z-index: 5;
-}
-
-.hero-ref-circle-btn:hover {
-  transform: scale(1.12);
-  background: #ffffff;
-  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.25);
 }
 
 /* Responsive adjustments */
@@ -261,14 +233,8 @@ html.lenis, html.lenis body {
 
 .hero-top-nav-item {
   cursor: default;
-  transition: color 0.22s ease, text-shadow 0.22s ease, transform 0.22s ease;
   display: inline-block;
-}
-
-.hero-top-nav-item:hover {
-  color: #ffffff;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.5);
-  transform: translateY(-1px);
+  user-select: none;
 }
 
 .hero-top-nav-divider {
@@ -333,16 +299,9 @@ html.lenis, html.lenis body {
   background: #10121a;
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.88);
-  cursor: pointer;
+  cursor: default;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s ease, color 0.22s ease;
-}
-
-.hero-subtext-icon-btn:hover {
-  background: #181b28;
-  border-color: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  transform: translateY(-2px);
+  user-select: none;
 }
 
 .hero-subtext-footnote {

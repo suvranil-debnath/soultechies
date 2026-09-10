@@ -17,10 +17,10 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
     //   p 0.582 -> 0.650: map gently blurs & enhances brightness to become backdrop for Project Showcase
     //   p 0.650 -> 0.727: persistent ambient map background
     //   p > 0.727: covered by WorkedWith full-bleed slide-up stage
-    const BURST_START = 0.512
-    const BURST_END   = 0.582
-    const BLUR_START  = 0.582
-    const BLUR_END    = 0.650
+    const BURST_START = 0.470
+    const BURST_END   = 0.550
+    const BLUR_START  = 0.550
+    const BLUR_END    = 0.620
 
     const st = ScrollTrigger.create({
       trigger: document.body,
@@ -67,7 +67,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           img.style.maskImage        = mask
           img.style.webkitMaskImage  = mask
         } else if (p <= BLUR_END) {
-          // Phase 2: Map smoothly transitions into comfortable ambient backdrop for Project Showcase (0.68 -> 0.76)
+          // Phase 2: Map smoothly transitions into comfortable ambient backdrop for Project Showcase (0.68 -> 0.74)
           const t = (p - BLUR_START) / (BLUR_END - BLUR_START)
           const eased = t * (2 - t) // ease-out
 
@@ -94,8 +94,8 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
             img.style.maskImage        = mask
             img.style.webkitMaskImage  = mask
           }
-        } else if (p <= 0.727) {
-          // Phase 3: Pinned comfortable ambient Kolkata map backdrop behind Project Showcase (0.650 -> 0.727)
+        } else if (p <= 0.80) {
+          // Phase 3: Pinned comfortable ambient Kolkata map backdrop behind Project Showcase (0.74 -> 0.80)
           el.style.opacity       = '1'
           el.style.pointerEvents = 'none'
           img.style.transform    = 'scale(1.05)'
@@ -104,8 +104,8 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           img.style.maskImage    = 'none'
           img.style.webkitMaskImage = 'none'
         } else {
-          // Phase 4: Stage covers map as WorkedWith slides up (p > 0.727)
-          const t = Math.min(1, (p - 0.727) / 0.05)
+          // Phase 4: Stage covers map as WorkedWith slides up (p > 0.80)
+          const t = Math.min(1, (p - 0.80) / 0.04)
           const mapOp = (0.50 * (1 - t)).toFixed(4)
           el.style.opacity       = mapOp
           el.style.pointerEvents = 'none'

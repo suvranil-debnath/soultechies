@@ -4,6 +4,7 @@ import './index.css'
 import Scene from './canvas/Scene'
 import Preloader from './components/Preloader'
 import AboutSection from './components/AboutSection'
+import ServicesSection from './components/ServicesSection'
 import HeroSection from './components/HeroSection'
 import KolkataMapOverlay from './components/KolkataMapOverlay'
 import ProjectShowcase from './components/ProjectShowcase'
@@ -68,6 +69,7 @@ function App() {
           onGapMeasured={handleGapMeasured}
         />
         <AboutSection isPreloaderDone={isPreloaderDone} />
+        <ServicesSection isPreloaderDone={isPreloaderDone} />
         <KolkataMapOverlay isPreloaderDone={isPreloaderDone} />
         <ProjectShowcase isPreloaderDone={isPreloaderDone} />
         <WorkedWithSection isPreloaderDone={isPreloaderDone} />

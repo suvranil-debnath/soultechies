@@ -21,7 +21,7 @@ export default function FooterSection({ isPreloaderDone }) {
   }
 
   // =========================================================================
-  // CURTAIN-UP SCROLL TRANSITION (p: 0.915 → 1.00)
+  // CURTAIN-UP SCROLL TRANSITION (p: 0.97 → 1.00)
   // The footer curtain slides up from translateY(100%) to translateY(0%)
   // completely covering the Contact Us / Robot section from the bottom.
   // =========================================================================
@@ -38,14 +38,14 @@ export default function FooterSection({ isPreloaderDone }) {
       onUpdate: (self) => {
         const p = self.progress
 
-        if (p < 0.95) {
+        if (p < 0.97) {
           footer.style.transform = 'translateY(100%)'
           footer.style.opacity = '0'
           footer.style.visibility = 'hidden'
           footer.style.pointerEvents = 'none'
         } else {
           // Slide up smoothly like a solid curtain
-          const t = (p - 0.95) / 0.05
+          const t = (p - 0.97) / 0.03
           const curtainEase = 1 - Math.pow(1 - t, 2.5) // smooth cubic deceleration
           const translateY = (100 * (1 - curtainEase)).toFixed(2)
 

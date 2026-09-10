@@ -132,8 +132,8 @@ export default function Navbar({ isPreloaderDone }) {
       scrub: true,
       onUpdate: (self) => {
         const p = self.progress
-        if (p >= 0.945) {
-          const t = Math.min(1.0, (p - 0.945) / 0.03)
+        if (p >= 0.965) {
+          const t = Math.min(1.0, (p - 0.965) / 0.02)
           wrapper.style.transform = `translateX(-50%) translateY(${t * 80}px)`
           wrapper.style.opacity = `${Math.max(0, 1 - t * 2)}`
           wrapper.style.pointerEvents = 'none'
@@ -400,10 +400,10 @@ export default function Navbar({ isPreloaderDone }) {
   if (!isPreloaderDone) return null
 
   const mainLinks = [
-    { label: 'About Us', href: '#about', progress: 0.18 },
-    { label: 'Services', href: '#services', progress: 0.38 },
-    { label: 'Our Work', href: '#our-work', progress: 0.54 },
-    { label: 'Worked With', href: '#worked-with', progress: 0.82 },
+    { label: 'About Us', href: '#about', progress: 0.14 },
+    { label: 'Services', href: '#services', progress: 0.32 },
+    { label: 'Our Work', href: '#our-work', progress: 0.65 },
+    { label: 'Worked With', href: '#worked-with', progress: 0.86 },
   ]
 
   const leftSecondary = ['Support', 'Terms of Use', 'Policy Privacy']
@@ -517,7 +517,7 @@ export default function Navbar({ isPreloaderDone }) {
               <button
                 onClick={() => {
                   const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-                  window.scrollTo({ top: maxScroll * 0.98, behavior: 'smooth' })
+                  window.scrollTo({ top: maxScroll * 0.95, behavior: 'smooth' })
                 }}
                 style={{
                   padding: '10px 24px',

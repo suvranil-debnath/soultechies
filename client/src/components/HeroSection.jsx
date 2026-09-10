@@ -146,8 +146,8 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
           return
         }
 
-        // Scroll exit for wordmark (p: 0.00 -> 0.12)
-        const t = Math.min(1, p / 0.12)
+        // Scroll exit for wordmark (p: 0.00 -> 0.07)
+        const t = Math.min(1, p / 0.07)
         const ease = t * t // power2.in
         const op = Math.max(0, 1 - t)
         const blur = (t * 10).toFixed(1)
@@ -160,8 +160,8 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
         ultechies.style.opacity = op.toFixed(4)
         ultechies.style.filter = `blur(${blur}px)`
 
-        // Cards and topNav exit slightly faster (p: 0.00 -> 0.075) so canvas is clean before black hole zoom
-        const cardT = Math.min(1, p / 0.075)
+        // Cards and topNav exit slightly faster (p: 0.00 -> 0.045) so canvas is clean before black hole zoom
+        const cardT = Math.min(1, p / 0.045)
         const cardEase = cardT * cardT
         const cardOp = Math.max(0, 1 - cardT * 1.25)
         const cardBlur = (cardT * 6).toFixed(1)
@@ -204,7 +204,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '960vh',
+        height: '1260vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}
@@ -310,14 +310,9 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
         </p>
 
         <div className="hero-subtext-actions">
-          <button
-            type="button"
+          <div
             className="hero-subtext-icon-btn"
-            title="View Solutions & Architecture"
-            onClick={() => {
-              const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-              window.scrollTo({ top: maxScroll * 0.45, behavior: 'smooth' })
-            }}
+            title="Solutions & Architecture"
           >
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
               <rect x="2" y="2" width="6.5" height="6.5" rx="1.2" stroke="currentColor" strokeWidth="1.8" />
@@ -328,21 +323,17 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
               <rect x="2.5" y="15.5" width="2" height="2" fill="currentColor" />
               <rect x="6" y="15.5" width="2" height="2" fill="currentColor" />
             </svg>
-          </button>
+          </div>
 
-          <button
-            type="button"
+          <div
             className="hero-subtext-icon-btn"
-            title="Explore Next Section"
-            onClick={() => {
-              window.scrollTo({ top: window.innerHeight * 1.2, behavior: 'smooth' })
-            }}
+            title="Next Section"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="4" x2="12" y2="20" />
               <polyline points="6 14 12 20 18 14" />
             </svg>
-          </button>
+          </div>
         </div>
       </div>
 
