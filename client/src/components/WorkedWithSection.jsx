@@ -1081,11 +1081,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             backgroundColor: '#07071c',
             background: 'radial-gradient(135% 100% at 50% 0%, #1c113e 0%, #0d0a27 45%, #060618 100%)',
             border: '1px solid rgba(168, 85, 247, 0.42)',
-            borderRadius: 'clamp(24px, 3.5vw, 40px)',
+            borderRadius: 'clamp(22px, 3vw, 36px)',
             boxShadow: '0 24px 80px rgba(0, 0, 0, 0.95), 0 0 60px rgba(139, 92, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-            padding: 'clamp(22px, 3.4vh, 38px) clamp(22px, 3.8vw, 46px)',
+            padding: 'clamp(18px, 2.6vh, 30px) clamp(22px, 3.4vw, 42px)',
             overflowY: 'auto',
-            maxHeight: '82vh',
+            maxHeight: '80vh',
             boxSizing: 'border-box',
             willChange: 'transform',
           }}
@@ -1103,45 +1103,15 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             }}
           />
 
-          {/* Top Badge: • NEW PROJECT */}
-          <div
-            style={{
-              position: 'relative',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontFamily: "'Space Grotesk', monospace",
-              fontSize: '11px',
-              fontWeight: 600,
-              letterSpacing: '0.18em',
-              color: '#c084fc',
-              textTransform: 'uppercase',
-              marginBottom: '10px',
-              zIndex: 1,
-            }}
-          >
-            <span
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: '#c084fc',
-                boxShadow: '0 0 10px #c084fc, 0 0 18px #a855f7',
-                display: 'inline-block',
-              }}
-            />
-            NEW PROJECT
-          </div>
-
           {/* Screen Title & Subtitle */}
-          <div style={{ position: 'relative', marginBottom: '22px', zIndex: 1 }}>
+          <div style={{ position: 'relative', marginBottom: '18px', zIndex: 1 }}>
             <h3
               style={{
                 fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(26px, 3.4vw, 38px)',
+                fontSize: 'clamp(22px, 2.8vw, 32px)',
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
-                margin: '0 0 8px 0',
+                margin: '0 0 6px 0',
                 color: '#ffffff',
               }}
             >
@@ -1150,10 +1120,10 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             <p
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(13px, 1.15vw, 15px)',
+                fontSize: 'clamp(12.5px, 1.05vw, 14px)',
                 color: 'rgba(255, 255, 255, 0.65)',
                 margin: 0,
-                lineHeight: 1.5,
+                lineHeight: 1.45,
               }}
             >
               Share a few details and we'll take care of the rest.
@@ -1169,16 +1139,16 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '36px 16px',
+                padding: '30px 16px',
                 textAlign: 'center',
-                gap: '14px',
+                gap: '12px',
                 zIndex: 1,
               }}
             >
               <div
                 style={{
-                  width: '58px',
-                  height: '58px',
+                  width: '54px',
+                  height: '54px',
                   borderRadius: '50%',
                   background: '#130d2d',
                   border: '1px solid rgba(168, 85, 247, 0.6)',
@@ -1188,14 +1158,14 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   boxShadow: '0 0 30px rgba(168, 85, 247, 0.4)',
                 }}
               >
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
               <h4
                 style={{
                   fontFamily: "'Outfit', sans-serif",
-                  fontSize: '22px',
+                  fontSize: '20px',
                   fontWeight: 700,
                   color: '#ffffff',
                   margin: 0,
@@ -1206,11 +1176,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
               <p
                 style={{
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontSize: '13px',
+                  fontSize: '12.5px',
                   color: 'rgba(255, 255, 255, 0.65)',
                   maxWidth: '380px',
                   margin: 0,
-                  lineHeight: 1.5,
+                  lineHeight: 1.45,
                 }}
               >
                 Thank you for sharing your project details. Our team will review your requirements and get back to you within 24 hours.
@@ -1222,9 +1192,9 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   setFormData({ name: '', email: '', message: '', selectedServices: ['3D Web Experiences'] })
                 }}
                 style={{
-                  marginTop: '10px',
-                  padding: '12px 24px',
-                  borderRadius: '12px',
+                  marginTop: '8px',
+                  padding: '11px 22px',
+                  borderRadius: '11px',
                   border: '1px solid rgba(168, 85, 247, 0.5)',
                   background: '#150f33',
                   color: '#d8b4fe',
@@ -1249,21 +1219,21 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             </div>
           ) : (
             /* Main Form */
-            <form onSubmit={handleSubmit} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '16px', zIndex: 1 }}>
+            <form onSubmit={handleSubmit} style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '13px', zIndex: 1 }}>
               {/* Row 1: Name & Email */}
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: '16px',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                  gap: '14px',
                 }}
               >
                 {/* NAME */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   <label
                     style={{
                       fontFamily: "'Space Grotesk', monospace",
-                      fontSize: '11px',
+                      fontSize: '10.5px',
                       fontWeight: 700,
                       letterSpacing: '0.12em',
                       color: 'rgba(255, 255, 255, 0.85)',
@@ -1279,13 +1249,13 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Your name"
                     style={{
-                      padding: '14px 18px',
-                      borderRadius: '12px',
+                      padding: '11px 16px',
+                      borderRadius: '11px',
                       background: 'rgba(8, 6, 24, 0.75)',
                       border: '1px solid rgba(255, 255, 255, 0.12)',
                       color: '#ffffff',
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '13.5px',
+                      fontSize: '13px',
                       outline: 'none',
                       transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
@@ -1301,11 +1271,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 </div>
 
                 {/* EMAIL */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   <label
                     style={{
                       fontFamily: "'Space Grotesk', monospace",
-                      fontSize: '11px',
+                      fontSize: '10.5px',
                       fontWeight: 700,
                       letterSpacing: '0.12em',
                       color: 'rgba(255, 255, 255, 0.85)',
@@ -1321,13 +1291,13 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="name@organization.com"
                     style={{
-                      padding: '14px 18px',
-                      borderRadius: '12px',
+                      padding: '11px 16px',
+                      borderRadius: '11px',
                       background: 'rgba(8, 6, 24, 0.75)',
                       border: '1px solid rgba(255, 255, 255, 0.12)',
                       color: '#ffffff',
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '13.5px',
+                      fontSize: '13px',
                       outline: 'none',
                       transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
@@ -1344,11 +1314,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
               </div>
 
               {/* Row 2: Service Selection Pills */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label
                   style={{
                     fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '11px',
+                    fontSize: '10.5px',
                     fontWeight: 700,
                     letterSpacing: '0.12em',
                     color: 'rgba(192, 132, 252, 0.95)',
@@ -1357,7 +1327,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 >
                   TARGET SCOPE / EXPERTISE
                 </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
                   {SERVICES.map((service) => {
                     const isSelected = formData.selectedServices.includes(service)
                     return (
@@ -1366,7 +1336,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                         type="button"
                         onClick={() => toggleService(service)}
                         style={{
-                          padding: '8px 18px',
+                          padding: '7px 16px',
                           borderRadius: '999px',
                           border: isSelected
                             ? '1px solid #c084fc'
@@ -1383,7 +1353,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                           boxShadow: isSelected ? '0 0 20px rgba(192, 132, 252, 0.4)' : 'none',
                         }}
                       >
-                        {isSelected && <span style={{ marginRight: '6px', color: '#f0abfc' }}>✓</span>}
+                        {isSelected && <span style={{ marginRight: '5px', color: '#f0abfc' }}>✓</span>}
                         {service}
                       </button>
                     )
@@ -1392,11 +1362,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
               </div>
 
               {/* Row 3: Project Brief Textarea */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <label
                   style={{
                     fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '11px',
+                    fontSize: '10.5px',
                     fontWeight: 700,
                     letterSpacing: '0.12em',
                     color: 'rgba(255, 255, 255, 0.85)',
@@ -1411,15 +1381,17 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Tell us about your project..."
                   style={{
-                    padding: '14px 18px',
-                    borderRadius: '12px',
+                    minHeight: '68px',
+                    height: '72px',
+                    padding: '11px 16px',
+                    borderRadius: '11px',
                     background: 'rgba(8, 6, 24, 0.75)',
                     border: '1px solid rgba(255, 255, 255, 0.12)',
                     color: '#ffffff',
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: '13.5px',
+                    fontSize: '13px',
                     lineHeight: 1.45,
-                    resize: 'vertical',
+                    resize: 'none',
                     outline: 'none',
                     transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                   }}
@@ -1440,13 +1412,13 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 disabled={isSubmitting}
                 style={{
                   marginTop: '6px',
-                  padding: '16px 28px',
-                  borderRadius: '14px',
+                  padding: '13px 26px',
+                  borderRadius: '12px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
                   background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%)',
                   color: '#ffffff',
                   fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
-                  fontSize: '13px',
+                  fontSize: '12.5px',
                   fontWeight: 700,
                   letterSpacing: '0.12em',
                   textTransform: 'uppercase',
@@ -1454,7 +1426,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '10px',
+                  gap: '8px',
                   boxShadow: '0 10px 32px rgba(124, 58, 237, 0.5), 0 0 20px rgba(99, 102, 241, 0.3)',
                   transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                   opacity: isSubmitting ? 0.75 : 1,
