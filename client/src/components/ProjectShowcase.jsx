@@ -8,42 +8,62 @@ gsap.registerPlugin(ScrollTrigger)
 export const projectsData = [
   {
     id: 1,
-    title: 'PRIME TOWER',
+    title: 'FACE RECOGNITION ATTENDANCE',
     year: '2025',
-    category: 'Commercial Architecture',
-    description: 'A 45-story commercial high-rise in the business district, featuring a sustainable double-skin facade and a sky garden bridging two kinetic volumes.',
-    tags: ['Sustainable Design', 'Glass Facade', 'Urban Integration'],
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    category: 'Mobile Application',
+    description: 'A Flutter-based employee attendance system that uses face recognition to identify employees and automatically record attendance. It includes employee registration, face capture, authentication, attendance marking, and attendance history. The app is integrated with Firebase for cloud data synchronization.',
+    tags: ['Flutter', 'Dart', 'Firebase', 'Face Recognition', 'REST API', 'Android Studio', 'Git'],
+    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
     link: '#',
   },
   {
     id: 2,
-    title: 'THE AXEL',
+    title: 'ENTERPRISE BILLING SYSTEM',
     year: '2024',
-    category: 'Mixed-Use Spatial',
-    description: 'Curved parametric facade structures that redefine the city skyline. Intersecting circular floor plans create dynamic internal courtyards and fluid public spaces.',
-    tags: ['Parametric Design', 'Public Space', 'Mixed-Use'],
-    image: 'https://images.unsplash.com/photo-1527576539890-dfa815648363?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    category: 'Software / Business Utility',
+    description: 'A professional billing and invoice management application designed for businesses to create and manage invoices. The system supports customer information, business details, GST calculations, product/service entries, automated totals and invoice generation.',
+    tags: ['Flutter', 'Dart', 'Invoice Engine', 'GST Calculation', 'PDF Generation'],
+    image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
     link: '#',
   },
   {
     id: 3,
-    title: 'MODERNIST PAVILION',
-    year: '2023',
-    category: 'Cultural Center',
-    description: 'A minimalist white cement structure contrasting against natural landscapes. Designed as a seamless flow between interior gallery spaces and exterior sculpture gardens.',
-    tags: ['Minimalism', 'Cast Concrete', 'Cultural Space'],
-    image: 'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    title: 'HOPZY.IN TRAVEL PLATFORM',
+    year: '2024',
+    category: 'Full-Stack Travel Platform',
+    description: 'A modern online bus booking platform where users can search routes, explore available buses, check schedules and book journeys. Engineered professionally across frontend and backend systems, including booking APIs, passenger records, ticketing, seat selection, availability and cancellations.',
+    tags: ['React.js', 'Tailwind CSS', 'Node.js', 'Express.js', 'REST APIs', 'Git'],
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
     link: '#',
   },
   {
     id: 4,
-    title: 'NEXUS SPATIAL LAB',
+    title: 'CAR HUNT — CAR RENTAL',
+    year: '2024',
+    category: 'Full-Stack Web Application',
+    description: 'A full-stack car rental and fleet management platform designed for browsing vehicles, managing inventory, calculating rental pricing and handling reservations. The system includes customer/admin workflows, authentication, role-based access control, vehicle inventory, reservations and rental tracking.',
+    tags: ['React.js', 'TypeScript', 'Tailwind CSS', 'Material UI', 'Spring Boot', 'Node.js', 'MongoDB'],
+    image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    link: '#',
+  },
+  {
+    id: 5,
+    title: 'AI RESUME BUILDER & STUDIO',
     year: '2025',
-    category: 'Cybernetic Tech',
-    description: 'A futuristic research facility integrating holographic spatial interfaces, adaptive kinetic facade shading, and relativistic real-time computing pipelines.',
-    tags: ['Spatial Computing', 'Kinetic Shading', 'Net Zero'],
-    image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    category: 'Full-Stack Web Application',
+    description: 'A modern resume-building platform designed to help users create clean, structured and ATS-friendly resumes. It provides real-time editing and PDF generation, making it suitable for job seekers who want to quickly create professional resumes.',
+    tags: ['React', 'TypeScript', 'Tailwind CSS', 'PDF Generation', 'ATS Optimization'],
+    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    link: '#',
+  },
+  {
+    id: 6,
+    title: 'BUDGET NINJA — EXPENSE TRACKER',
+    year: '2023',
+    category: 'Full-Stack / Financial Management',
+    description: 'An expense-tracking application for managing personal income, expenses and budgets. It includes categorization, budget planning, transaction management, financial reporting and an interactive analytics dashboard.',
+    tags: ['Java', 'JSP', 'JDBC', 'HTML', 'CSS', 'JavaScript', 'Git', 'SQL Database'],
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
     link: '#',
   },
 ]
@@ -54,7 +74,7 @@ const EXTENDED_PROJECTS = [
   ...projectsData,
   ...projectsData,
 ]
-const N = projectsData.length // 4
+const N = projectsData.length
 
 export default function ProjectShowcase({ isPreloaderDone }) {
   const containerRef = useRef(null)
@@ -63,7 +83,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
   const topMetaRef = useRef(null)
   const textContentRef = useRef(null)
 
-  const [virtualIndex, setVirtualIndex] = useState(4) // Start at index 4 (first item in middle set)
+  const [virtualIndex, setVirtualIndex] = useState(N) // Start at index N (first item in middle set)
   const [isAnimating, setIsAnimating] = useState(false)
 
   const currentIndex = ((virtualIndex % N) + N) % N
@@ -140,11 +160,11 @@ export default function ProjectShowcase({ isPreloaderDone }) {
       duration: 0.68,
       ease: 'power3.inOut',
       onComplete: () => {
-        // Seamless loop normalization: keep index in the middle set [4..7]
+        // Seamless loop normalization: keep index in the middle set [N..2N-1]
         let normalized = nextVIdx
-        if (normalized >= 8) {
+        if (normalized >= 2 * N) {
           normalized -= N
-        } else if (normalized < 4) {
+        } else if (normalized < N) {
           normalized += N
         }
 
@@ -303,10 +323,10 @@ export default function ProjectShowcase({ isPreloaderDone }) {
             <h2
               style={{
                 fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
-                fontSize: 'clamp(36px, 4.8vw, 68px)',
+                fontSize: 'clamp(28px, 3.6vw, 52px)',
                 fontWeight: 800,
                 letterSpacing: '-0.03em',
-                lineHeight: 1.0,
+                lineHeight: 1.06,
                 textTransform: 'uppercase',
                 color: '#ffffff',
                 margin: 0,
