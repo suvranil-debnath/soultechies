@@ -98,35 +98,70 @@ export default function ServicesSection({ isPreloaderDone }) {
       container.style.visibility = 'visible'
       container.style.pointerEvents = sectionOpacity > 0.2 ? 'auto' : 'none'
 
-      // Continuous card progress: F(t) ranges from 0.0 to 3.0
-      const cardProgress = t * 3.0
+      // Convert normalized scroll progress t (0.0 -> 1.0) into stepped card progress (0.0 -> 3.0)
+      // Each card gets a generous resting plateau so it sits stationary and readable in center.
+      // Transition between cards is smooth, crisp, and completely prevents overlapping.
+      const rawProgress = t * 3.0
+      const segment = Math.min(2, Math.floor(rawProgress))
+      const subT = rawProgress - segment
+
+      // Rest plateau: first 28% of each segment rests rock-solid in center
+      // Remaining 72% transitions smoothly to next card with hermite easing
+      let cardProgress = 0
+      if (rawProgress >= 3.0) {
+        cardProgress = 3.0
+      } else if (subT < 0.28) {
+        cardProgress = segment
+      } else {
+        const transitionP = (subT - 0.28) / 0.72
+        const hermite = transitionP * transitionP * (3 - 2 * transitionP)
+        cardProgress = segment + hermite
+      }
+
       const currentIdx = Math.min(3, Math.max(0, Math.round(cardProgress)))
       setActiveStep(currentIdx)
 
-      // Compact physical vertical step between cards (tight stacked distance ~130px)
-      const cardStepPx = 130
+      // Generous physical clearance travel distance (580px ensures cards are never close or overlapping)
+      const cardTravelDistance = 580
+
+      // Dynamically grab live card DOM elements to prevent any stale refs
+      const cardElements = cardsContainerRef.current
+        ? Array.from(cardsContainerRef.current.children)
+        : (cards || [])
 
       // Update each card position, scale, opacity, and blur
-      cards.forEach((cardEl, idx) => {
+      cardElements.forEach((cardEl, idx) => {
         if (!cardEl) return
 
         const delta = idx - cardProgress // delta = 0 when card is in focal center
-        const yOffset = delta * cardStepPx
         const absDelta = Math.abs(delta)
+        const yOffset = delta * cardTravelDistance
 
-        // Card scale: 1.0 in center, downscales subtly for stacked depth
-        const scale = Math.max(0.88, 1.0 - absDelta * 0.08)
+        // Card scale: 1.0 in center, subtle elegant 0.94 scale for exiting/entering
+        const scale = Math.max(0.92, 1.0 - absDelta * 0.08)
 
-        // Card opacity: 1.0 in focal center, soft elegant stack opacity
-        const opacity = Math.max(0, 1.0 - Math.pow(absDelta, 1.2) * 0.55)
+        // Strict display and opacity culling: ONLY active and immediately transitioning cards exist
+        let opacity = 0
+        if (absDelta < 0.65) {
+          cardEl.style.display = 'block'
+          cardEl.style.visibility = 'visible'
+          // Smooth cosine curve for natural luxury fade: 1.0 at center, 0 at 0.65
+          const normD = absDelta / 0.65
+          opacity = Math.cos(normD * (Math.PI / 2))
+        } else {
+          cardEl.style.display = 'none'
+          cardEl.style.visibility = 'hidden'
+          opacity = 0
+        }
 
-        // Card blur: crisp in center, subtle soft optical focus on surrounding cards
-        const blur = Math.min(3, absDelta * 1.8)
+        // Card blur: crisp in center, subtle soft optical focus during transition
+        const blur = Math.min(4, absDelta * 3.0)
 
         cardEl.style.transform = `translateY(${yOffset.toFixed(1)}px) scale(${scale.toFixed(3)})`
         cardEl.style.opacity = opacity.toFixed(4)
-        cardEl.style.filter = `blur(${blur.toFixed(1)}px)`
-        cardEl.style.zIndex = Math.round((10 - absDelta * 3))
+        cardEl.style.filter = blur > 0.1 ? `blur(${blur.toFixed(1)}px)` : 'none'
+        cardEl.style.zIndex = Math.round(20 - absDelta * 5)
+        cardEl.style.pointerEvents = opacity > 0.7 ? 'auto' : 'none'
       })
 
       // Vertical "SERVICES" label travels smoothly with the flow
@@ -253,9 +288,12 @@ export default function ServicesSection({ isPreloaderDone }) {
             style={{
               position: 'absolute',
               width: '100%',
+              display: idx === 0 ? 'block' : 'none',
+              opacity: idx === 0 ? 1 : 0,
+              transform: idx === 0 ? 'translateY(0px) scale(1)' : `translateY(${idx * 580}px) scale(0.92)`,
               borderRadius: 'clamp(28px, 2.8vw, 36px)',
               // Apple Liquid Glass - Pure frosted obsidian smoked crystal
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 22%, rgba(18, 22, 32, 0.55) 55%, rgba(8, 10, 16, 0.84) 100%)',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 22%, rgba(14, 18, 28, 0.88) 55%, rgba(6, 8, 14, 0.96) 100%)',
               backdropFilter: 'blur(45px) saturate(190%)',
               WebkitBackdropFilter: 'blur(45px) saturate(190%)',
               padding: 'clamp(30px, 3.4vh, 40px) clamp(28px, 2.6vw, 38px)',

@@ -29,18 +29,285 @@ const SERVICES = [
   'Custom Architecture',
 ]
 
+const PROCESS_STEPS = [
+  {
+    step: '01',
+    title: 'DISCOVER',
+    description: 'We understand your business, goals and audience to find the right opportunities.',
+    accent: '#a855f7',
+    lookAt: { x: -0.85, y: 0.1 },
+    icon: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16" y2="16" />
+      </svg>
+    ),
+  },
+  {
+    step: '02',
+    title: 'DESIGN',
+    description: 'We create user-focused designs that communicate your value and engage users.',
+    accent: '#c084fc',
+    lookAt: { x: -0.45, y: 0.1 },
+    icon: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Bézier vector curve with anchor nodes matching reference */}
+        <path d="M4 16C4 8 20 8 20 16" stroke="#ffffff" strokeWidth="2" />
+        <circle cx="4" cy="16" r="2.5" fill="#c084fc" stroke="#ffffff" strokeWidth="1.5" />
+        <circle cx="20" cy="16" r="2.5" fill="#c084fc" stroke="#ffffff" strokeWidth="1.5" />
+        <circle cx="12" cy="8" r="2.5" fill="#c084fc" stroke="#ffffff" strokeWidth="1.5" />
+        <path d="M12 10.5v6.5" stroke="#ffffff" strokeWidth="2" />
+        <path d="M10 17l2 3 2-3h-4z" fill="#c084fc" stroke="#ffffff" strokeWidth="1" />
+      </svg>
+    ),
+  },
+  {
+    step: '03',
+    title: 'BUILD',
+    description: 'We bring the design to life with clean, scalable code and powerful functionality.',
+    accent: '#e879f9',
+    lookAt: { x: 0.45, y: 0.1 },
+    icon: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+        <line x1="14" y1="4" x2="10" y2="20" stroke="#c084fc" strokeWidth="2" />
+      </svg>
+    ),
+  },
+  {
+    step: '04',
+    title: 'LAUNCH',
+    description: 'We test, optimize and launch your digital product for real-world impact.',
+    accent: '#38bdf8',
+    lookAt: { x: 0.85, y: 0.1 },
+    icon: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" fill="rgba(192, 132, 252, 0.4)" />
+        <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+        <circle cx="15" cy="9" r="1.5" fill="#c084fc" />
+        <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
+        <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
+      </svg>
+    ),
+  },
+]
+
+// Horizontal flow connector with glowing neon violet bead and arrowhead matching reference
+function ProcessConnector() {
+  return (
+    <div
+      className="process-connector-arrow"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        width: 'clamp(18px, 1.8vw, 30px)',
+        height: '24px',
+        flexShrink: 0,
+        pointerEvents: 'none',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: '6px',
+          height: '1.5px',
+          background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.4) 0%, rgba(192, 132, 252, 0.9) 50%, rgba(168, 85, 247, 0.7) 100%)',
+          boxShadow: '0 0 8px rgba(168, 85, 247, 0.5)',
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '6px',
+          height: '6px',
+          borderRadius: '50%',
+          backgroundColor: '#c084fc',
+          boxShadow: '0 0 10px #c084fc, 0 0 18px #a855f7',
+        }}
+      />
+      <svg
+        width="7"
+        height="11"
+        viewBox="0 0 7 11"
+        fill="none"
+        style={{
+          position: 'absolute',
+          right: '1px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+        }}
+      >
+        <path d="M1.5 1.5L5.5 5.5L1.5 9.5" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+}
+
+function ProcessCard({ step, isHovered, onHover, onLeave }) {
+  return (
+    <div
+      className="process-card-item"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      style={{
+        position: 'relative',
+        width: 'clamp(170px, 11.8vw, 215px)',
+        minHeight: 'clamp(235px, 28vh, 275px)',
+        borderRadius: 'clamp(18px, 1.4vw, 22px)',
+        // Deep Obsidian Glass matching reference
+        background: isHovered
+          ? 'linear-gradient(155deg, rgba(255, 255, 255, 0.09) 0%, rgba(168, 85, 247, 0.14) 28%, rgba(18, 12, 40, 0.90) 70%, rgba(7, 7, 22, 0.98) 100%)'
+          : 'linear-gradient(155deg, rgba(255, 255, 255, 0.05) 0%, rgba(168, 85, 247, 0.05) 28%, rgba(12, 9, 30, 0.82) 70%, rgba(6, 6, 18, 0.94) 100%)',
+        backdropFilter: 'blur(28px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        padding: 'clamp(18px, 2.2vh, 24px) clamp(12px, 1vw, 18px)',
+        boxSizing: 'border-box',
+        color: '#ffffff',
+        border: isHovered ? '1.5px solid rgba(192, 132, 252, 0.75)' : '1px solid rgba(168, 85, 247, 0.28)',
+        borderTop: isHovered ? '1.5px solid rgba(255, 255, 255, 0.65)' : '1px solid rgba(255, 255, 255, 0.32)',
+        boxShadow: isHovered
+          ? '0 20px 50px -10px rgba(0, 0, 0, 0.95), 0 0 32px rgba(168, 85, 247, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.45)'
+          : '0 14px 38px -10px rgba(0, 0, 0, 0.85), 0 0 16px -4px rgba(168, 85, 247, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.22)',
+        transform: isHovered ? 'translateY(-6px) scale(1.02)' : 'translateY(0px) scale(1.0)',
+        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        cursor: 'pointer',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        flexShrink: 0,
+      }}
+    >
+      {/* Specular gloss top curve */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '40%',
+          background: 'linear-gradient(160deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%)',
+          pointerEvents: 'none',
+          borderRadius: 'clamp(18px, 1.4vw, 22px) clamp(18px, 1.4vw, 22px) 0 0',
+        }}
+      />
+
+      {/* Top Left Step Number matching reference */}
+      <div
+        style={{
+          alignSelf: 'flex-start',
+          fontFamily: "'Space Grotesk', monospace",
+          fontSize: 'clamp(15px, 1.1vw, 18px)',
+          fontWeight: 800,
+          color: '#c084fc',
+          letterSpacing: '0.04em',
+          marginBottom: 'clamp(8px, 1vh, 12px)',
+          textShadow: isHovered ? '0 0 14px rgba(192, 132, 252, 0.8)' : '0 0 8px rgba(192, 132, 252, 0.35)',
+          transition: 'text-shadow 0.3s ease',
+        }}
+      >
+        {step.step}
+      </div>
+
+      {/* Center Circular Glowing Icon Ring matching reference! */}
+      <div
+        style={{
+          position: 'relative',
+          width: 'clamp(56px, 4vw, 66px)',
+          height: 'clamp(56px, 4vw, 66px)',
+          borderRadius: '50%',
+          border: isHovered ? '2px solid #c084fc' : '2px solid rgba(192, 132, 252, 0.65)',
+          background: isHovered
+            ? 'radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, rgba(18, 12, 40, 0.9) 75%)'
+            : 'radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, rgba(12, 9, 30, 0.85) 75%)',
+          boxShadow: isHovered
+            ? '0 0 32px rgba(192, 132, 252, 0.75), inset 0 0 16px rgba(192, 132, 252, 0.45)'
+            : '0 0 18px rgba(168, 85, 247, 0.45), inset 0 0 10px rgba(168, 85, 247, 0.22)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 'clamp(12px, 1.5vh, 16px)',
+          transform: isHovered ? 'scale(1.06)' : 'scale(1.0)',
+          transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        {step.icon}
+      </div>
+
+      {/* Step Title */}
+      <h3
+        style={{
+          margin: '0 0 clamp(6px, 0.8vh, 8px) 0',
+          fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
+          fontSize: 'clamp(15px, 1.1vw, 18px)',
+          fontWeight: 800,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          color: '#ffffff',
+          textShadow: isHovered ? '0 0 18px rgba(192, 132, 252, 0.7)' : '0 2px 10px rgba(0, 0, 0, 0.6)',
+          transition: 'text-shadow 0.3s ease',
+        }}
+      >
+        {step.title}
+      </h3>
+
+      {/* Step Description */}
+      <p
+        style={{
+          margin: 0,
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: 'clamp(11px, 0.76vw, 12.5px)',
+          fontWeight: 400,
+          lineHeight: 1.5,
+          color: 'rgba(230, 230, 255, 0.72)',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {step.description}
+      </p>
+
+      {/* Laser edge glow line at bottom on hover */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: '12%',
+          right: '12%',
+          height: '1.5px',
+          background: isHovered
+            ? 'linear-gradient(90deg, transparent, #c084fc, #e879f9, transparent)'
+            : 'transparent',
+          boxShadow: isHovered ? '0 0 14px #c084fc' : 'none',
+          transition: 'all 0.35s ease',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
+  )
+}
+
 export default function WorkedWithSection({ isPreloaderDone }) {
   const stageRef = useRef(null)
   const canvasRef = useRef(null)
   const splineAppRef = useRef(null)
   const modelWrapperRef = useRef(null)
   const marqueeWrapperRef = useRef(null)
-  const titleWrapperRef = useRef(null)
   const formWrapperRef = useRef(null)
   const formCardRef = useRef(null)
+  const processLeftRef = useRef(null)
+  const processRightRef = useRef(null)
+  const processBridgeRef = useRef(null)
+  const hoveredProcessStepRef = useRef(null)
 
   const [splineLoaded, setSplineLoaded] = useState(false)
   const [hoveredLogo, setHoveredLogo] = useState(null)
+  const [activeHoveredStep, setActiveHoveredStep] = useState(null)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -148,10 +415,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
     // Damped animation loop for natural organic look-at motion
     const animateLookAt = () => {
-      const target = mouseTargetRef.current
+      // Robot focuses on the hovered process card, or follows cursor smoothly
+      const target = hoveredProcessStepRef.current || mouseTargetRef.current
       const curr = mouseCurrentRef.current
 
-      // Smooth damped lerp toward cursor
+      // Smooth damped lerp toward target
       curr.x += (target.x - curr.x) * 0.08
       curr.y += (target.y - curr.y) * 0.08
 
@@ -211,8 +479,10 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
         const modelWrapper = modelWrapperRef.current
         const marqueeWrapper = marqueeWrapperRef.current
-        const titleWrapper = titleWrapperRef.current
         const formWrapper = formWrapperRef.current
+        const processLeft = processLeftRef.current
+        const processRight = processRightRef.current
+        const processBridge = processBridgeRef.current
 
         // ─── PHASE 0: Completely offscreen ─────────────────────────────────
         if (p < 0.80) {
@@ -230,14 +500,23 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             marqueeWrapper.style.transform = 'translateY(0px)'
             marqueeWrapper.style.opacity = '1'
           }
-          if (titleWrapper) {
-            titleWrapper.style.transform = 'translate(-50%, -50%)'
-            titleWrapper.style.opacity = '1'
+          if (processBridge) {
+            processBridge.style.opacity = '0'
           }
           if (formWrapper) {
             formWrapper.style.opacity = '0'
             formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
             formWrapper.style.pointerEvents = 'none'
+          }
+          if (processLeft) {
+            processLeft.style.opacity = '0'
+            processLeft.style.transform = 'translateY(calc(-50% + 40px))'
+            processLeft.style.pointerEvents = 'none'
+          }
+          if (processRight) {
+            processRight.style.opacity = '0'
+            processRight.style.transform = 'translateY(calc(-50% + 40px))'
+            processRight.style.pointerEvents = 'none'
           }
 
         // ─── PHASE 1: Slide-up curtain over Project Showcase ───────────────
@@ -260,17 +539,26 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             marqueeWrapper.style.transform = 'translateY(0px)'
             marqueeWrapper.style.opacity = '1'
           }
-          if (titleWrapper) {
-            titleWrapper.style.transform = 'translate(-50%, -50%)'
-            titleWrapper.style.opacity = '1'
+          if (processBridge) {
+            processBridge.style.opacity = eased.toFixed(3)
           }
           if (formWrapper) {
             formWrapper.style.opacity = '0'
             formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
             formWrapper.style.pointerEvents = 'none'
           }
+          if (processLeft) {
+            processLeft.style.opacity = eased.toFixed(3)
+            processLeft.style.transform = `translateY(calc(-50% + ${(40 * (1 - eased)).toFixed(1)}px))`
+            processLeft.style.pointerEvents = t > 0.5 ? 'auto' : 'none'
+          }
+          if (processRight) {
+            processRight.style.opacity = eased.toFixed(3)
+            processRight.style.transform = `translateY(calc(-50% + ${(40 * (1 - eased)).toFixed(1)}px))`
+            processRight.style.pointerEvents = t > 0.5 ? 'auto' : 'none'
+          }
 
-        // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee ────────
+        // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee + process ──
         } else if (p <= 0.91) {
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
@@ -286,17 +574,26 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             marqueeWrapper.style.transform = 'translateY(0px)'
             marqueeWrapper.style.opacity = '1'
           }
-          if (titleWrapper) {
-            titleWrapper.style.transform = 'translate(-50%, -50%)'
-            titleWrapper.style.opacity = '1'
+          if (processBridge) {
+            processBridge.style.opacity = '1'
           }
           if (formWrapper) {
             formWrapper.style.opacity = '0'
             formWrapper.style.transform = 'translate(-50%, calc(-50% + 30px)) scale(0.92)'
             formWrapper.style.pointerEvents = 'none'
           }
+          if (processLeft) {
+            processLeft.style.opacity = '1'
+            processLeft.style.transform = 'translateY(-50%)'
+            processLeft.style.pointerEvents = 'auto'
+          }
+          if (processRight) {
+            processRight.style.opacity = '1'
+            processRight.style.transform = 'translateY(-50%)'
+            processRight.style.pointerEvents = 'auto'
+          }
 
-        // ─── PHASE A: UI Dismissal (Marquee + Title exit up) ──────────────
+        // ─── PHASE A: UI Dismissal (Marquee + Title + Process exit) ───────────
         } else if (p <= 0.94) {
           const t = (p - 0.91) / 0.03
           const hermite = t * t * (3 - 2 * t)  // smooth hermite ease
@@ -314,12 +611,21 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             marqueeWrapper.style.opacity = marqueeOp
           }
 
-          // Typography also exits upward
-          const titleExitY = -(hermite * 80).toFixed(1)
-          const titleOp = Math.max(0, 1 - hermite * 2.5).toFixed(3)
-          if (titleWrapper) {
-            titleWrapper.style.transform = `translate(-50%, calc(-50% + ${titleExitY}px))`
-            titleWrapper.style.opacity = titleOp
+          // Process cards slide outward and fade smoothly
+          const procExitX = (hermite * 120).toFixed(1)
+          const procOp = Math.max(0, 1 - hermite * 2.2).toFixed(3)
+          if (processLeft) {
+            processLeft.style.transform = `translate(-${procExitX}px, -50%)`
+            processLeft.style.opacity = procOp
+            processLeft.style.pointerEvents = 'none'
+          }
+          if (processRight) {
+            processRight.style.transform = `translate(${procExitX}px, -50%)`
+            processRight.style.opacity = procOp
+            processRight.style.pointerEvents = 'none'
+          }
+          if (processBridge) {
+            processBridge.style.opacity = procOp
           }
 
           if (modelWrapper) {
@@ -344,13 +650,21 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           stage.style.visibility = 'visible'
           stage.style.pointerEvents = 'auto'
 
-          // Marquee and title stay hidden
+          // Marquee and bridge stay hidden
           if (marqueeWrapper) {
             marqueeWrapper.style.transform = 'translateY(-110px)'
             marqueeWrapper.style.opacity = '0'
           }
-          if (titleWrapper) {
-            titleWrapper.style.opacity = '0'
+          if (processBridge) {
+            processBridge.style.opacity = '0'
+          }
+          if (processLeft) {
+            processLeft.style.opacity = '0'
+            processLeft.style.pointerEvents = 'none'
+          }
+          if (processRight) {
+            processRight.style.opacity = '0'
+            processRight.style.pointerEvents = 'none'
           }
 
           // Robot face zoom: scale 0.84 → 3.88
@@ -432,41 +746,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         }}
       />
 
-      {/* ========================================================================= */}
-      {/* LAYER 1: GIANT "WORKED WITH" TYPOGRAPHY BEHIND THE 3D ROBOT              */}
-      {/* ========================================================================= */}
-      <div
-        ref={titleWrapperRef}
-        style={{
-          position: 'absolute',
-          top: '36%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '100vw',
-          textAlign: 'center',
-          zIndex: 1, // Sits BEHIND the Spline 3D canvas (z-index 2)
-          pointerEvents: 'none',
-          userSelect: 'none',
-          willChange: 'transform, opacity',
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
-            fontSize: 'clamp(64px, 12.5vw, 210px)',
-            fontWeight: 900,
-            letterSpacing: '-0.03em',
-            lineHeight: 0.9,
-            margin: 0,
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-            color: 'rgba(255, 255, 255, 0.12)',
-            textShadow: '0 0 80px rgba(168, 85, 247, 0.25)',
-          }}
-        >
-          WORKED <span style={{ color: 'rgba(168, 85, 247, 0.35)', textShadow: '0 0 100px rgba(168, 85, 247, 0.6)' }}>WITH</span>
-        </h2>
-      </div>
 
       {/* ========================================================================= */}
       {/* LAYER 2: INTERACTIVE SPLINE 3D ROBOT CANVAS (Sits in front of text)       */}
@@ -616,6 +895,159 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             )
           })}
         </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* LAYER 3.5: 4-STAGE PROCESS FRAMEWORK (Sides & Behind the 3D Robot)        */}
+      {/* ========================================================================= */}
+      {/* CENTRAL DATA CONDUIT BEHIND 3D ROBOT (Connects Step 02 to Step 03) */}
+      <div
+        ref={processBridgeRef}
+        className="process-bridge-conduit"
+        style={{
+          position: 'absolute',
+          left: 'calc(50% - clamp(140px, 11.5vw, 185px))',
+          right: 'calc(50% - clamp(140px, 11.5vw, 185px))',
+          top: '52%',
+          transform: 'translateY(-50%)',
+          height: '24px',
+          zIndex: 1, // Sits directly BEHIND the Spline 3D canvas (z-index 2)
+          pointerEvents: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          willChange: 'opacity',
+        }}
+      >
+        {/* Glowing conduit line */}
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '1.5px',
+            background: 'linear-gradient(90deg, rgba(168, 85, 247, 0.45) 0%, rgba(192, 132, 252, 0.85) 50%, rgba(168, 85, 247, 0.5) 100%)',
+            boxShadow: '0 0 10px rgba(168, 85, 247, 0.45), 0 0 20px rgba(192, 132, 252, 0.25)',
+          }}
+        >
+          {/* Animated traveling energy pulse */}
+          <div
+            className="conduit-traveling-pulse"
+            style={{
+              position: 'absolute',
+              top: '-3px',
+              left: '0%',
+              width: '32px',
+              height: '7px',
+              borderRadius: '7px',
+              background: 'radial-gradient(ellipse at center, #ffffff 0%, #c084fc 60%, transparent 100%)',
+              boxShadow: '0 0 14px #c084fc, 0 0 24px #a855f7',
+              animation: 'conduitTravel 3.2s ease-in-out infinite',
+            }}
+          />
+        </div>
+
+        {/* Arrowhead pointing into Step 03 */}
+        <svg
+          width="8"
+          height="12"
+          viewBox="0 0 8 12"
+          fill="none"
+          style={{
+            position: 'absolute',
+            right: '-2px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+          }}
+        >
+          <path d="M1.5 2L5.5 6L1.5 10" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+
+      {/* LEFT PROCESS GROUP: 01 DISCOVER -> 02 DESIGN */}
+      <div
+        ref={processLeftRef}
+        className="process-side-group process-side-group-left"
+        style={{
+          position: 'absolute',
+          right: 'calc(50% + clamp(140px, 11.5vw, 185px))',
+          top: '52%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(6px, 1vw, 14px)',
+          zIndex: 15,
+          pointerEvents: 'auto',
+          willChange: 'transform, opacity',
+        }}
+      >
+        <ProcessCard
+          step={PROCESS_STEPS[0]}
+          isHovered={activeHoveredStep === '01'}
+          onHover={() => {
+            setActiveHoveredStep('01')
+            hoveredProcessStepRef.current = PROCESS_STEPS[0].lookAt
+          }}
+          onLeave={() => {
+            setActiveHoveredStep(null)
+            hoveredProcessStepRef.current = null
+          }}
+        />
+        <ProcessConnector />
+        <ProcessCard
+          step={PROCESS_STEPS[1]}
+          isHovered={activeHoveredStep === '02'}
+          onHover={() => {
+            setActiveHoveredStep('02')
+            hoveredProcessStepRef.current = PROCESS_STEPS[1].lookAt
+          }}
+          onLeave={() => {
+            setActiveHoveredStep(null)
+            hoveredProcessStepRef.current = null
+          }}
+        />
+      </div>
+
+      {/* RIGHT PROCESS GROUP: 03 BUILD -> 04 LAUNCH */}
+      <div
+        ref={processRightRef}
+        className="process-side-group process-side-group-right"
+        style={{
+          position: 'absolute',
+          left: 'calc(50% + clamp(140px, 11.5vw, 185px))',
+          top: '52%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(6px, 1vw, 14px)',
+          zIndex: 15,
+          pointerEvents: 'auto',
+          willChange: 'transform, opacity',
+        }}
+      >
+        <ProcessCard
+          step={PROCESS_STEPS[2]}
+          isHovered={activeHoveredStep === '03'}
+          onHover={() => {
+            setActiveHoveredStep('03')
+            hoveredProcessStepRef.current = PROCESS_STEPS[2].lookAt
+          }}
+          onLeave={() => {
+            setActiveHoveredStep(null)
+            hoveredProcessStepRef.current = null
+          }}
+        />
+        <ProcessConnector />
+        <ProcessCard
+          step={PROCESS_STEPS[3]}
+          isHovered={activeHoveredStep === '04'}
+          onHover={() => {
+            setActiveHoveredStep('04')
+            hoveredProcessStepRef.current = PROCESS_STEPS[3].lookAt
+          }}
+          onLeave={() => {
+            setActiveHoveredStep(null)
+            hoveredProcessStepRef.current = null
+          }}
+        />
       </div>
 
       {/* ========================================================================= */}
@@ -1069,7 +1501,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
         </div>
       </div>
 
-      {/* Marquee, Pulsing and Spinner Keyframes */}
+      {/* Marquee, Pulsing and Responsive Keyframes */}
       <style>{`
         @keyframes marqueeScroll {
           0% {
@@ -1094,6 +1526,58 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           50% {
             opacity: 0.6;
             transform: scale(1.3);
+          }
+        }
+        @keyframes conduitTravel {
+          0% {
+            left: 0%;
+            opacity: 0;
+          }
+          15% {
+            opacity: 1;
+          }
+          85% {
+            opacity: 1;
+          }
+          100% {
+            left: calc(100% - 32px);
+            opacity: 0;
+          }
+        }
+        @media (max-width: 1280px) {
+          .process-card-item {
+            width: clamp(150px, 11vw, 175px) !important;
+            min-height: 220px !important;
+            padding: 14px 10px !important;
+          }
+        }
+        @media (max-width: 980px) {
+          .process-bridge-conduit {
+            display: none !important;
+          }
+          .process-side-group {
+            flex-direction: column !important;
+            gap: 8px !important;
+          }
+          .process-side-group-left {
+            right: calc(50% + clamp(110px, 16vw, 150px)) !important;
+          }
+          .process-side-group-right {
+            left: calc(50% + clamp(110px, 16vw, 150px)) !important;
+          }
+          .process-connector-arrow {
+            transform: rotate(90deg) !important;
+            height: 16px !important;
+          }
+          .process-card-item {
+            width: 170px !important;
+            min-height: auto !important;
+            padding: 14px 10px !important;
+          }
+        }
+        @media (max-width: 720px) {
+          .process-side-group {
+            display: none !important;
           }
         }
       `}</style>
