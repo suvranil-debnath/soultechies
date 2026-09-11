@@ -1103,67 +1103,60 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             }}
           />
 
-          {/* Top Status Header */}
+          {/* Top Badge: • NEW PROJECT */}
           <div
             style={{
               position: 'relative',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingBottom: '14px',
-              marginBottom: '16px',
-              borderBottom: '1px solid rgba(168, 85, 247, 0.22)',
+              gap: '8px',
               fontFamily: "'Space Grotesk', monospace",
               fontSize: '11px',
+              fontWeight: 600,
               letterSpacing: '0.18em',
-              color: 'rgba(192, 132, 252, 0.9)',
+              color: '#c084fc',
+              textTransform: 'uppercase',
+              marginBottom: '10px',
               zIndex: 1,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span
-                style={{
-                  width: '7px',
-                  height: '7px',
-                  borderRadius: '50%',
-                  background: '#a855f7',
-                  boxShadow: '0 0 10px #a855f7, 0 0 20px #ec4899',
-                  animation: 'pulseGlow 2s infinite',
-                }}
-              />
-              NEURAL INTERFACE // READY
-            </div>
-            <div style={{ color: 'rgba(255, 255, 255, 0.45)', fontSize: '10px' }}>
-              SYS.LOC: KOLKATA [22.57° N]
-            </div>
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#c084fc',
+                boxShadow: '0 0 10px #c084fc, 0 0 18px #a855f7',
+                display: 'inline-block',
+              }}
+            />
+            NEW PROJECT
           </div>
 
           {/* Screen Title & Subtitle */}
-          <div style={{ position: 'relative', marginBottom: '20px', zIndex: 1 }}>
+          <div style={{ position: 'relative', marginBottom: '22px', zIndex: 1 }}>
             <h3
               style={{
                 fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(24px, 3vw, 34px)',
+                fontSize: 'clamp(26px, 3.4vw, 38px)',
                 fontWeight: 800,
                 letterSpacing: '-0.02em',
-                margin: '0 0 6px 0',
-                background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 50%, #f472b6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                margin: '0 0 8px 0',
+                color: '#ffffff',
               }}
             >
-              INITIALIZE TRANSMISSION
+              Start a New Project
             </h3>
             <p
               style={{
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 'clamp(12px, 1.2vw, 14px)',
+                fontSize: 'clamp(13px, 1.15vw, 15px)',
                 color: 'rgba(255, 255, 255, 0.65)',
                 margin: 0,
-                lineHeight: 1.4,
+                lineHeight: 1.5,
               }}
             >
-              Have a visionary project? Transmit your directive directly to our core.
+              Share a few details and we'll take care of the rest.
             </p>
           </div>
 
@@ -1208,7 +1201,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   margin: 0,
                 }}
               >
-                TRANSMISSION ENCRYPTED & RECEIVED
+                Project Brief Received!
               </h4>
               <p
                 style={{
@@ -1220,7 +1213,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   lineHeight: 1.5,
                 }}
               >
-                Your transmission has been linked to our neural network. Our architects will contact you within 24 hours.
+                Thank you for sharing your project details. Our team will review your requirements and get back to you within 24 hours.
               </p>
               <button
                 type="button"
@@ -1230,13 +1223,14 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 }}
                 style={{
                   marginTop: '10px',
-                  padding: '10px 22px',
+                  padding: '12px 24px',
                   borderRadius: '12px',
                   border: '1px solid rgba(168, 85, 247, 0.5)',
                   background: '#150f33',
                   color: '#d8b4fe',
                   fontFamily: "'Space Grotesk', monospace",
                   fontSize: '11px',
+                  fontWeight: 600,
                   letterSpacing: '0.14em',
                   cursor: 'pointer',
                   transition: 'all 0.25s ease',
@@ -1250,7 +1244,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   e.currentTarget.style.boxShadow = 'none'
                 }}
               >
-                TRANSMIT ANOTHER MESSAGE
+                SUBMIT ANOTHER BRIEF
               </button>
             </div>
           ) : (
@@ -1264,59 +1258,61 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                   gap: '16px',
                 }}
               >
-                {/* Identifier / Name */}
+                {/* NAME */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label
                     style={{
                       fontFamily: "'Space Grotesk', monospace",
-                      fontSize: '10px',
-                      letterSpacing: '0.16em',
-                      color: 'rgba(192, 132, 252, 0.9)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      color: 'rgba(255, 255, 255, 0.85)',
                       textTransform: 'uppercase',
                     }}
                   >
-                    IDENTIFIER / NAME
+                    NAME
                   </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter your name"
+                    placeholder="Your name"
                     style={{
-                      padding: '13px 16px',
+                      padding: '14px 18px',
                       borderRadius: '12px',
-                      background: '#0a081e',
-                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      background: 'rgba(8, 6, 24, 0.75)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
                       color: '#ffffff',
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '13px',
+                      fontSize: '13.5px',
                       outline: 'none',
                       transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#a855f7'
+                      e.target.style.borderColor = '#c084fc'
                       e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'
                       e.target.style.boxShadow = 'none'
                     }}
                   />
                 </div>
 
-                {/* Comms / Email */}
+                {/* EMAIL */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label
                     style={{
                       fontFamily: "'Space Grotesk', monospace",
-                      fontSize: '10px',
-                      letterSpacing: '0.16em',
-                      color: 'rgba(192, 132, 252, 0.9)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.12em',
+                      color: 'rgba(255, 255, 255, 0.85)',
                       textTransform: 'uppercase',
                     }}
                   >
-                    COMMS / EMAIL
+                    EMAIL
                   </label>
                   <input
                     type="email"
@@ -1325,22 +1321,22 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="name@organization.com"
                     style={{
-                      padding: '13px 16px',
+                      padding: '14px 18px',
                       borderRadius: '12px',
-                      background: '#0a081e',
-                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      background: 'rgba(8, 6, 24, 0.75)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
                       color: '#ffffff',
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontSize: '13px',
+                      fontSize: '13.5px',
                       outline: 'none',
                       transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#a855f7'
+                      e.target.style.borderColor = '#c084fc'
                       e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                      e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'
                       e.target.style.boxShadow = 'none'
                     }}
                   />
@@ -1352,9 +1348,10 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 <label
                   style={{
                     fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '10px',
-                    letterSpacing: '0.16em',
-                    color: 'rgba(192, 132, 252, 0.9)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    color: 'rgba(192, 132, 252, 0.95)',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -1369,24 +1366,24 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                         type="button"
                         onClick={() => toggleService(service)}
                         style={{
-                          padding: '8px 16px',
+                          padding: '8px 18px',
                           borderRadius: '999px',
                           border: isSelected
                             ? '1px solid #c084fc'
-                            : '1px solid rgba(168, 85, 247, 0.26)',
+                            : '1px solid rgba(255, 255, 255, 0.12)',
                           background: isSelected
-                            ? 'linear-gradient(135deg, #581c87 0%, #831843 100%)'
-                            : '#0c0a22',
-                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
+                            ? 'linear-gradient(135deg, #701a75 0%, #831843 50%, #581c87 100%)'
+                            : 'rgba(10, 8, 28, 0.8)',
+                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.75)',
                           fontFamily: "'Space Grotesk', sans-serif",
-                          fontSize: '11px',
+                          fontSize: '11.5px',
                           fontWeight: 500,
                           cursor: 'pointer',
                           transition: 'all 0.25s ease',
-                          boxShadow: isSelected ? '0 0 16px rgba(168, 85, 247, 0.35)' : 'none',
+                          boxShadow: isSelected ? '0 0 20px rgba(192, 132, 252, 0.4)' : 'none',
                         }}
                       >
-                        {isSelected && <span style={{ marginRight: '5px', color: '#d8b4fe' }}>✓</span>}
+                        {isSelected && <span style={{ marginRight: '6px', color: '#f0abfc' }}>✓</span>}
                         {service}
                       </button>
                     )
@@ -1394,43 +1391,44 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 </div>
               </div>
 
-              {/* Row 3: Message / Payload */}
+              {/* Row 3: Project Brief Textarea */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label
                   style={{
                     fontFamily: "'Space Grotesk', monospace",
-                    fontSize: '10px',
-                    letterSpacing: '0.16em',
-                    color: 'rgba(192, 132, 252, 0.9)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    color: 'rgba(255, 255, 255, 0.85)',
                     textTransform: 'uppercase',
                   }}
                 >
-                  TRANSMISSION PAYLOAD / MESSAGE
+                  PROJECT BRIEF
                 </label>
                 <textarea
                   rows="3"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Outline your vision, timeline, questions or project requirements..."
+                  placeholder="Tell us about your project..."
                   style={{
-                    padding: '13px 16px',
+                    padding: '14px 18px',
                     borderRadius: '12px',
-                    background: '#0a081e',
-                    border: '1px solid rgba(168, 85, 247, 0.3)',
+                    background: 'rgba(8, 6, 24, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
                     color: '#ffffff',
                     fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontSize: '13px',
-                    lineHeight: 1.4,
+                    fontSize: '13.5px',
+                    lineHeight: 1.45,
                     resize: 'vertical',
                     outline: 'none',
                     transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#a855f7'
+                    e.target.style.borderColor = '#c084fc'
                     e.target.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.35)'
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'rgba(168, 85, 247, 0.3)'
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.12)'
                     e.target.style.boxShadow = 'none'
                   }}
                 />
@@ -1442,34 +1440,34 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                 disabled={isSubmitting}
                 style={{
                   marginTop: '6px',
-                  padding: '15px 32px',
+                  padding: '16px 28px',
                   borderRadius: '14px',
                   border: '1px solid rgba(255, 255, 255, 0.2)',
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #00f0ff 100%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #8b5cf6 100%)',
                   color: '#ffffff',
                   fontFamily: "'Outfit', 'Space Grotesk', sans-serif",
                   fontSize: '13px',
                   fontWeight: 700,
-                  letterSpacing: '0.14em',
+                  letterSpacing: '0.12em',
                   textTransform: 'uppercase',
                   cursor: isSubmitting ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 8px 32px rgba(124, 58, 237, 0.55), 0 0 20px rgba(0, 240, 255, 0.3)',
+                  gap: '10px',
+                  boxShadow: '0 10px 32px rgba(124, 58, 237, 0.5), 0 0 20px rgba(99, 102, 241, 0.3)',
                   transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                   opacity: isSubmitting ? 0.75 : 1,
                 }}
                 onMouseEnter={(e) => {
                   if (!isSubmitting) {
                     e.currentTarget.style.transform = 'translateY(-2px)'
-                    e.currentTarget.style.boxShadow = '0 12px 42px rgba(124, 58, 237, 0.75), 0 0 30px rgba(0, 240, 255, 0.5)'
+                    e.currentTarget.style.boxShadow = '0 14px 40px rgba(124, 58, 237, 0.7), 0 0 28px rgba(99, 102, 241, 0.5)'
                   }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0px)'
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(124, 58, 237, 0.55), 0 0 20px rgba(0, 240, 255, 0.3)'
+                  e.currentTarget.style.boxShadow = '0 10px 32px rgba(124, 58, 237, 0.5), 0 0 20px rgba(99, 102, 241, 0.3)'
                 }}
               >
                 {isSubmitting ? (
@@ -1484,15 +1482,25 @@ export default function WorkedWithSection({ isPreloaderDone }) {
                         animation: 'spin 0.8s linear infinite',
                       }}
                     />
-                    TRANSMITTING PAYLOAD...
+                    SENDING PROJECT BRIEF...
                   </>
                 ) : (
                   <>
-                    TRANSMIT DIRECTIVE
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13" />
-                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ transform: 'rotate(-10deg) translateY(-1px)' }}
+                    >
+                      <path d="m22 2-7 20-4-9-9-4Z" />
+                      <path d="M22 2 11 13" />
                     </svg>
+                    SEND PROJECT BRIEF
                   </>
                 )}
               </button>
