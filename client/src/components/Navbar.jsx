@@ -119,7 +119,7 @@ export default function Navbar({ isPreloaderDone }) {
     )
   }, [isPreloaderDone])
 
-  // Hide Navbar when footer curtain slides up (p >= 0.95)
+  // Hide Navbar when footer curtain slides up (p >= 0.980)
   useEffect(() => {
     if (!isPreloaderDone || !wrapperRef.current) return
 
@@ -132,8 +132,8 @@ export default function Navbar({ isPreloaderDone }) {
       scrub: true,
       onUpdate: (self) => {
         const p = self.progress
-        if (p >= 0.965) {
-          const t = Math.min(1.0, (p - 0.965) / 0.02)
+        if (p >= 0.980) {
+          const t = Math.min(1.0, (p - 0.980) / 0.015)
           wrapper.style.transform = `translateX(-50%) translateY(${t * 80}px)`
           wrapper.style.opacity = `${Math.max(0, 1 - t * 2)}`
           wrapper.style.pointerEvents = 'none'

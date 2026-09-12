@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import gsap from 'gsap'
-import { ExternalLink, ArrowLeft, ArrowRight } from 'lucide-react'
+import { ExternalLink, ArrowLeft, ArrowRight, Play, Pause } from 'lucide-react'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -13,17 +13,17 @@ export const projectsData = [
     category: 'Mobile Application',
     description: 'A Flutter-based employee attendance system that uses face recognition to identify employees and automatically record attendance. It includes employee registration, face capture, authentication, attendance marking, and attendance history. The app is integrated with Firebase for cloud data synchronization.',
     tags: ['Flutter', 'Dart', 'Firebase', 'Face Recognition', 'REST API', 'Android Studio', 'Git'],
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    image: '/projects/attandance.jpeg',
     link: '#',
   },
   {
     id: 2,
-    title: 'ENTERPRISE BILLING SYSTEM',
+    title: 'DREAM INK — BILLING SYSTEM',
     year: '2024',
     category: 'Software / Business Utility',
-    description: 'A professional billing and invoice management application designed for businesses to create and manage invoices. The system supports customer information, business details, GST calculations, product/service entries, automated totals and invoice generation.',
-    tags: ['Flutter', 'Dart', 'Invoice Engine', 'GST Calculation', 'PDF Generation'],
-    image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    description: 'A professional billing and studio management application designed for Dream Ink Tattoos & Makeover Studio to create and manage invoices. The system supports customer profiles, expense tracking, thermal printing, GST calculations, product/service entries, automated totals and invoice generation.',
+    tags: ['Flutter', 'Thermal Printer', 'Invoice Engine', 'GST Calculation', 'Client Management'],
+    image: '/projects/dream%20ink.jpeg',
     link: '#',
   },
   {
@@ -42,8 +42,8 @@ export const projectsData = [
     year: '2024',
     category: 'Full-Stack Web Application',
     description: 'A full-stack car rental and fleet management platform designed for browsing vehicles, managing inventory, calculating rental pricing and handling reservations. The system includes customer/admin workflows, authentication, role-based access control, vehicle inventory, reservations and rental tracking.',
-    tags: ['React.js', 'TypeScript', 'Tailwind CSS', 'Material UI', 'Spring Boot', 'Node.js', 'MongoDB'],
-    image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    tags: ['React.js', 'Tailwind CSS', 'Node.js', 'JavaScript', 'Google Maps API'],
+    image: '/projects/car%20hunt.png',
     link: '#',
   },
   {
@@ -52,8 +52,8 @@ export const projectsData = [
     year: '2025',
     category: 'Full-Stack Web Application',
     description: 'A modern resume-building platform designed to help users create clean, structured and ATS-friendly resumes. It provides real-time editing and PDF generation, making it suitable for job seekers who want to quickly create professional resumes.',
-    tags: ['React', 'TypeScript', 'Tailwind CSS', 'PDF Generation', 'ATS Optimization'],
-    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    tags: ['React.js', 'Tailwind CSS', 'Node.js', 'JavaScript', 'PDF Generation', 'ATS Optimization'],
+    image: '/projects/ai%20resume%20builder.png',
     link: '#',
   },
   {
@@ -62,8 +62,18 @@ export const projectsData = [
     year: '2023',
     category: 'Full-Stack / Financial Management',
     description: 'An expense-tracking application for managing personal income, expenses and budgets. It includes categorization, budget planning, transaction management, financial reporting and an interactive analytics dashboard.',
-    tags: ['Java', 'JSP', 'JDBC', 'HTML', 'CSS', 'JavaScript', 'Git', 'SQL Database'],
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200',
+    tags: ['React.js', 'JavaScript', 'Firebase', 'Tailwind CSS', 'Cloud Sync', 'Analytics Dashboard'],
+    image: '/projects/budgetninja.png',
+    link: '#',
+  },
+  {
+    id: 7,
+    title: 'NINJARO — E-COMMERCE WEBSITE',
+    year: '2024',
+    category: 'E-commerce / Brand Website',
+    description: 'A modern e-commerce website developed for Ninjaro, a premium botanical mocktail premix brand. The website presents the product collection through a visually rich storefront and guides customers through the simple preparation process. It includes product discovery, search, special offers, shopping cart functionality, customer reviews, and responsive sections for the brand story and product experience.',
+    tags: ['React.js', 'Node.js', 'MongoDB', 'Tailwind CSS', 'PayU / Razorpay', 'E-commerce Platform'],
+    image: '/projects/ninjaro.png',
     link: '#',
   },
 ]
@@ -85,6 +95,14 @@ export default function ProjectShowcase({ isPreloaderDone }) {
 
   const [virtualIndex, setVirtualIndex] = useState(N) // Start at index N (first item in middle set)
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(true)
+
+  const isPlayingRef = useRef(true)
+  const isHoveredRef = useRef(false)
+  const isSectionVisibleRef = useRef(false)
+  const isAnimatingRef = useRef(false)
+  const autoPlayTimerRef = useRef(null)
+  const handleNavigateRef = useRef(null)
 
   const currentIndex = ((virtualIndex % N) + N) % N
   const currentProject = projectsData[currentIndex]
@@ -115,10 +133,29 @@ export default function ProjectShowcase({ isPreloaderDone }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [virtualIndex, isAnimating])
 
+  // Reset auto-play slideshow countdown
+  const resetAutoPlayTimer = useCallback(() => {
+    if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current)
+    if (!isPlayingRef.current) return
+
+    autoPlayTimerRef.current = setInterval(() => {
+      if (
+        isPlayingRef.current &&
+        isSectionVisibleRef.current &&
+        !isHoveredRef.current &&
+        !isAnimatingRef.current
+      ) {
+        handleNavigateRef.current?.(1)
+      }
+    }, 2000)
+  }, [])
+
   // Sequential, seamless vertical track sliding handler
   const handleNavigate = (dir) => {
-    if (isAnimating || !trackRef.current) return
+    if (isAnimatingRef.current || !trackRef.current) return
+    isAnimatingRef.current = true
     setIsAnimating(true)
+    resetAutoPlayTimer()
 
     const nextVIdx = virtualIndex + dir
     const targetY = getTrackY(nextVIdx)
@@ -173,45 +210,58 @@ export default function ProjectShowcase({ isPreloaderDone }) {
           gsap.set(trackRef.current, { y: getTrackY(normalized) })
         }
         setIsAnimating(false)
+        isAnimatingRef.current = false
       },
     })
   }
 
-  // Scroll Trigger Reveal (1260vh timeline): enters at p >= 0.680, fully visible & interactive at p >= 0.740
+  handleNavigateRef.current = handleNavigate
+
+  // Mount & cleanup auto-play timer
+  useEffect(() => {
+    if (!isPreloaderDone) return
+    resetAutoPlayTimer()
+    return () => {
+      if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current)
+    }
+  }, [isPreloaderDone, resetAutoPlayTimer])
+
+  // Scroll Trigger Reveal (1380vh timeline): enters at p >= 0.550, fully visible & interactive at 0.610 <= p < 0.810
   useEffect(() => {
     if (!isPreloaderDone || !containerRef.current) return
 
     const el = containerRef.current
+
+    const updateProgress = (p) => {
+      isSectionVisibleRef.current = p >= 0.580 && p < 0.810
+
+      if (p < 0.550) {
+        el.style.opacity = '0'
+        el.style.pointerEvents = 'none'
+        el.style.transform = 'translateY(36px)'
+      } else if (p <= 0.610) {
+        const t = (p - 0.550) / 0.060
+        const eased = t * (2 - t) // ease-out
+        el.style.opacity = eased.toFixed(4)
+        el.style.pointerEvents = eased > 0.4 ? 'auto' : 'none'
+        el.style.transform = `translateY(${(36 * (1 - eased)).toFixed(1)}px)`
+      } else {
+        el.style.opacity = '1'
+        el.style.pointerEvents = p < 0.820 ? 'auto' : 'none'
+        el.style.transform = 'translateY(0px)'
+      }
+    }
 
     const st = ScrollTrigger.create({
       trigger: document.body,
       start: 'top top',
       end: 'bottom bottom',
       scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress
-
-        // p < 0.550: completely hidden
-        // p 0.550 -> 0.610: fade in & slide up into pinned state
-        // p 0.610 -> 0.800: 100% visible & pinned
-        // p > 0.800: pinned in place under WorkedWith slide-up stage
-        if (p < 0.550) {
-          el.style.opacity = '0'
-          el.style.pointerEvents = 'none'
-          el.style.transform = 'translateY(36px)'
-        } else if (p <= 0.610) {
-          const t = (p - 0.550) / 0.060
-          const eased = t * (2 - t) // ease-out
-          el.style.opacity = eased.toFixed(4)
-          el.style.pointerEvents = eased > 0.4 ? 'auto' : 'none'
-          el.style.transform = `translateY(${(36 * (1 - eased)).toFixed(1)}px)`
-        } else {
-          el.style.opacity = '1'
-          el.style.pointerEvents = p < 0.820 ? 'auto' : 'none'
-          el.style.transform = 'translateY(0px)'
-        }
-      },
+      onUpdate: (self) => updateProgress(self.progress),
     })
+
+    // Initial evaluation on mount
+    updateProgress(st.progress || 0)
 
     return () => st.kill()
   }, [isPreloaderDone])
@@ -241,6 +291,12 @@ export default function ProjectShowcase({ isPreloaderDone }) {
   return (
     <div
       ref={containerRef}
+      onMouseEnter={() => {
+        isHoveredRef.current = true
+      }}
+      onMouseLeave={() => {
+        isHoveredRef.current = false
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -490,6 +546,51 @@ export default function ProjectShowcase({ isPreloaderDone }) {
               <ArrowRight size={18} />
             </button>
 
+            {/* Auto Slideshow Play / Pause Button */}
+            <button
+              onClick={() => {
+                const nextState = !isPlaying
+                setIsPlaying(nextState)
+                isPlayingRef.current = nextState
+                if (nextState) {
+                  resetAutoPlayTimer()
+                } else if (autoPlayTimerRef.current) {
+                  clearInterval(autoPlayTimerRef.current)
+                }
+              }}
+              aria-label={isPlaying ? 'Pause Auto Slideshow' : 'Resume Auto Slideshow'}
+              title={isPlaying ? 'Pause Auto Slideshow' : 'Resume Auto Slideshow'}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                border: isPlaying ? '1px solid rgba(0, 240, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.18)',
+                background: isPlaying ? 'rgba(0, 240, 255, 0.10)' : 'rgba(255, 255, 255, 0.06)',
+                backdropFilter: 'blur(10px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isPlaying ? '#00f0ff' : 'rgba(255, 255, 255, 0.65)',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                outline: 'none',
+                boxShadow: isPlaying ? '0 0 16px rgba(0, 240, 255, 0.25)' : 'none',
+                marginLeft: '4px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#00f0ff'
+                e.currentTarget.style.color = '#00f0ff'
+                e.currentTarget.style.transform = 'scale(1.08)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = isPlaying ? 'rgba(0, 240, 255, 0.45)' : 'rgba(255, 255, 255, 0.18)'
+                e.currentTarget.style.color = isPlaying ? '#00f0ff' : 'rgba(255, 255, 255, 0.65)'
+                e.currentTarget.style.transform = 'scale(1.0)'
+              }}
+            >
+              {isPlaying ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: '2px' }} />}
+            </button>
+
             {/* Pagination Indicators */}
             <div
               style={{
@@ -510,12 +611,13 @@ export default function ProjectShowcase({ isPreloaderDone }) {
                         handleNavigate(diff)
                       }
                     }}
+                    aria-label={`Go to slide ${idx + 1}`}
                     style={{
                       height: '4px',
-                      width: isActive ? '32px' : '8px',
+                      width: isActive ? '34px' : '8px',
                       borderRadius: '999px',
                       background: isActive ? '#00f0ff' : 'rgba(255, 255, 255, 0.2)',
-                      boxShadow: isActive ? '0 0 12px rgba(0, 240, 255, 0.6)' : 'none',
+                      boxShadow: isActive ? '0 0 14px rgba(0, 240, 255, 0.7)' : 'none',
                       border: 'none',
                       padding: 0,
                       cursor: 'pointer',

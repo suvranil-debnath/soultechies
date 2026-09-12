@@ -204,7 +204,7 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
       style={{
         position: 'relative',
         width: '100%',
-        height: '1260vh',
+        height: '1380vh',
         zIndex: 10,
         pointerEvents: 'none',
       }}

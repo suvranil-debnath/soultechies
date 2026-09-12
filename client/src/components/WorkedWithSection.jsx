@@ -456,13 +456,14 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   }, [])
 
   // =========================================================================
-  // MASTER SCROLL TRIGGER CHOREOGRAPHY (1260vh timeline):
+  // MASTER SCROLL TRIGGER CHOREOGRAPHY (1380vh timeline):
   //
-  //  p: 0.00 → 0.80  — Offscreen (behind Project Showcase)
-  //  p: 0.80 → 0.84  — Stage slides up (Y: 100% → 0%) as 100% opaque cover
-  //  p: 0.84 → 0.91  — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
-  //  p: 0.91 → 0.94  — Phase A: Marquee + typography exit upward
-  //  p: 0.94 → 0.97  — Phase B: Robot screen zooms in & Contact Form reveals on robot's face
+  //  p: 0.00 → 0.800 — Offscreen (behind Project Showcase)
+  //  p: 0.800 → 0.835 — Stage slides up (Y: 100% → 0%) as 100% opaque cover
+  //  p: 0.835 → 0.900 — WORKED WITH stage fully pinned; interactive 3D robot + marquee active
+  //  p: 0.900 → 0.925 — Phase A: Marquee + Process cards exit outward/upward
+  //  p: 0.925 → 0.950 — Phase B: Robot screen zooms in & Contact Form reveals on robot's face
+  //  p: 0.950 → 0.980 — Phase C: DELAY / HOLD ZONE — Contact Form pinned & resting peacefully
   // =========================================================================
   useEffect(() => {
     if (!isPreloaderDone || !stageRef.current) return
@@ -520,8 +521,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE 1: Slide-up curtain over Project Showcase ───────────────
-        } else if (p <= 0.84) {
-          const t = (p - 0.80) / 0.04
+        } else if (p <= 0.835) {
+          const t = (p - 0.80) / 0.035
           const eased = 1 - Math.pow(1 - t, 2.5)
           const translateY = (100 * (1 - eased)).toFixed(2)
 
@@ -559,7 +560,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE 2: Stage pinned — interactive 3D robot + marquee + process ──
-        } else if (p <= 0.91) {
+        } else if (p <= 0.900) {
           stage.style.transform = 'translateY(0%)'
           stage.style.opacity = '1'
           stage.style.visibility = 'visible'
@@ -594,8 +595,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
           }
 
         // ─── PHASE A: UI Dismissal (Marquee + Title + Process exit) ───────────
-        } else if (p <= 0.94) {
-          const t = (p - 0.91) / 0.03
+        } else if (p <= 0.925) {
+          const t = (p - 0.900) / 0.025
           const hermite = t * t * (3 - 2 * t)  // smooth hermite ease
 
           stage.style.transform = 'translateY(0%)'
@@ -639,9 +640,9 @@ export default function WorkedWithSection({ isPreloaderDone }) {
             formWrapper.style.pointerEvents = 'none'
           }
 
-        // ─── PHASE B: Robot Screen Zoom & Contact Form Reveal on Face ───────
+        // ─── PHASE B & C: Robot Screen Zoom (p: 0.925 → 0.950) & HOLD DELAY (p: 0.950 → 0.980) ───
         } else {
-          const rawT = (p - 0.94) / 0.03
+          const rawT = (p - 0.925) / 0.025
           const t = Math.min(1.0, Math.max(0, rawT))
           const zoomEase = t * (2 - t)  // smooth ease-out
 
