@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Navbar from '../Navbar'
 import {
   ArrowRight,
+  ArrowUp,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -16,14 +17,82 @@ import {
   ShieldCheck,
   Zap,
   MapPin,
+  Play,
+  Pause,
 } from 'lucide-react'
 import { projectsData } from '../ProjectShowcase'
 import { SERVICES_DATA } from '../ServicesSection'
 import { CLIENT_LOGOS, PROCESS_STEPS } from '../WorkedWithSection'
 
+const MOBILE_PROCESS_STEPS = [
+  {
+    step: '01',
+    title: 'DISCOVER',
+    tagline: 'Strategic Analysis & Architecture',
+    description: 'We dissect your product vision, analyze market opportunities, and architect the technological blueprint before writing a single line of code.',
+    deliverables: ['Tech Architecture', 'User Insights', 'Product Roadmap'],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.5" y2="16.5" />
+      </svg>
+    ),
+  },
+  {
+    step: '02',
+    title: 'DESIGN',
+    tagline: 'Spatial UI & Interactive Prototypes',
+    description: 'We create user-focused designs that communicate your value and engage users through fluid motion, clean aesthetics, and high-fidelity prototypes.',
+    deliverables: ['Interactive UI/UX', 'Design Systems', '3D Visuals'],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19l7-7 3 3-7 7-3-3z" />
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+        <path d="M2 2l7.586 7.586" />
+        <circle cx="11" cy="11" r="2" />
+      </svg>
+    ),
+  },
+  {
+    step: '03',
+    title: 'BUILD',
+    tagline: 'Clean Code & Full-Stack Engine',
+    description: 'We bring the design to life with clean, scalable code, robust microservices, high-speed APIs, and high-performance WebGL/React functionality.',
+    deliverables: ['Clean Codebase', 'High-Speed APIs', 'Cloud Backend'],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+        <line x1="14" y1="4" x2="10" y2="20" />
+      </svg>
+    ),
+  },
+  {
+    step: '04',
+    title: 'LAUNCH',
+    tagline: 'Audits, Deployment & Scale',
+    description: 'We test, optimize, and launch your digital product with end-to-end reliability, zero downtime, and deep telemetry for continuous growth.',
+    deliverables: ['QA Audits', 'CI/CD Deploy', 'Telemetry & Scale'],
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
+        <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
+        <circle cx="15" cy="9" r="1.5" />
+      </svg>
+    ),
+  },
+]
+
 export default function MobileView() {
   // Mobile Project Carousel State
   const [currentProjectIdx, setCurrentProjectIdx] = useState(0)
+  const [isProjectAutoPlay, setIsProjectAutoPlay] = useState(true)
+  const isProjectPausedRef = useRef(false)
+  const projectPauseTimeoutRef = useRef(null)
+  const touchStartXRef = useRef(null)
+
+  // Mobile Process Step Active State
+  const [activeProcessStep, setActiveProcessStep] = useState('01')
 
   // Mobile Contact Form State
   const [formData, setFormData] = useState({
@@ -35,35 +104,67 @@ export default function MobileView() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  // Live Kolkata (IST) Time
-  const [kolkataTime, setKolkataTime] = useState('')
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date()
-      const timeStr = now.toLocaleTimeString('en-US', {
-        timeZone: 'Asia/Kolkata',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      })
-      setKolkataTime(`${timeStr} IST`)
-    }
-    updateTime()
-    const timer = setInterval(updateTime, 1000)
-    return () => clearInterval(timer)
-  }, [])
-
   const currentProject = useMemo(() => {
     return projectsData[currentProjectIdx] || projectsData[0]
   }, [currentProjectIdx])
 
-  const nextProject = () => {
+  const handleUserInteractProject = useCallback(() => {
+    isProjectPausedRef.current = true
+    if (projectPauseTimeoutRef.current) {
+      clearTimeout(projectPauseTimeoutRef.current)
+    }
+    // Resume auto-play after 4.5 seconds of user inactivity
+    projectPauseTimeoutRef.current = setTimeout(() => {
+      isProjectPausedRef.current = false
+    }, 4500)
+  }, [])
+
+  const nextProject = useCallback(() => {
+    handleUserInteractProject()
     setCurrentProjectIdx((prev) => (prev + 1) % projectsData.length)
+  }, [handleUserInteractProject])
+
+  const prevProject = useCallback(() => {
+    handleUserInteractProject()
+    setCurrentProjectIdx((prev) => (prev - 1 + projectsData.length) % projectsData.length)
+  }, [handleUserInteractProject])
+
+  // Autoplay effect for Mobile Project Showcase (rotates every 3.5 seconds)
+  useEffect(() => {
+    if (!isProjectAutoPlay) return
+
+    const timer = setInterval(() => {
+      if (!isProjectPausedRef.current) {
+        setCurrentProjectIdx((prev) => (prev + 1) % projectsData.length)
+      }
+    }, 3500)
+
+    return () => {
+      clearInterval(timer)
+      if (projectPauseTimeoutRef.current) clearTimeout(projectPauseTimeoutRef.current)
+    }
+  }, [isProjectAutoPlay])
+
+  const handleTouchStart = (e) => {
+    handleUserInteractProject()
+    touchStartXRef.current = e.touches[0].clientX
   }
 
-  const prevProject = () => {
-    setCurrentProjectIdx((prev) => (prev - 1 + projectsData.length) % projectsData.length)
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return
+    const touchEndX = e.changedTouches[0].clientX
+    const diffX = touchStartXRef.current - touchEndX
+
+    if (Math.abs(diffX) > 40) {
+      if (diffX > 0) {
+        // Swiped left -> next
+        nextProject()
+      } else {
+        // Swiped right -> prev
+        prevProject()
+      }
+    }
+    touchStartXRef.current = null
   }
 
   const handleSubmit = (e) => {
@@ -695,475 +796,512 @@ export default function MobileView() {
         </section>
 
 
-
-
         {/* ========================================================================= */}
-        {/* 3. ABOUT US SECTION                                                       */}
-        {/* ========================================================================= */}
-        <section
-          id="mobile-about"
-          style={{
-            padding: '48px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            backgroundColor: '#030712',
-          }}
-        >
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: '#00f0ff',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
-              }}
-            >
-              01 / ABOUT US
-            </div>
-
-            <h2
-              style={{
-                fontSize: 'clamp(24px, 6.5vw, 34px)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                marginBottom: '16px',
-              }}
-            >
-              Engineering Digital Reality for Modern Leaders
-            </h2>
-
-            <p
-              style={{
-                fontSize: '14.5px',
-                lineHeight: 1.65,
-                color: 'rgba(255, 255, 255, 0.75)',
-                marginBottom: '16px',
-              }}
-            >
-              Soultechies is a boutique technology and design engineering agency. We turn ambitious visions into robust, production-grade applications that stand out in speed, reliability, and visual craftsmanship.
-            </p>
-
-            <p
-              style={{
-                fontSize: '14px',
-                lineHeight: 1.65,
-                color: 'rgba(255, 255, 255, 0.55)',
-                marginBottom: '28px',
-              }}
-            >
-              From custom bus ticketing platforms and AI-driven resume studios to facial recognition attendance suites and e-commerce stores, we engineer systems that drive measurable business impact.
-            </p>
-
-            {/* 4 Pillars Grid */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '12px',
-              }}
-            >
-              {[
-                { label: 'Latency', value: '< 200ms', desc: 'Ultra-fast response' },
-                { label: 'Uptime', value: '99.99%', desc: 'Cloud resilience' },
-                { label: 'Security', value: 'End-to-End', desc: 'Hardened role auth' },
-                { label: 'Design', value: 'Pixel Perfect', desc: 'Modern cyber UX' },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '14px 12px',
-                    borderRadius: '14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      fontWeight: 600,
-                      marginBottom: '4px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    {item.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '17px',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      marginBottom: '2px',
-                    }}
-                  >
-                    {item.value}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      color: 'rgba(255, 255, 255, 0.4)',
-                    }}
-                  >
-                    {item.desc}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 4. SERVICES SECTION                                                       */}
+        {/* 3. SERVICES SECTION — Obsidian Liquid Glass Bento                         */}
         {/* ========================================================================= */}
         <section
           id="mobile-services"
           style={{
-            padding: '48px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            position: 'relative',
+            padding: '64px 20px clamp(56px, 9vh, 84px)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             backgroundColor: '#000000',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          {/* Subtle Ambient Radial Glow */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '100%',
+              maxWidth: '600px',
+              height: '350px',
+              background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.035) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+
+          <div style={{ maxWidth: '640px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            {/* Editorial Kicker Badge */}
             <div
               style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: '#ffe135',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)',
+                marginBottom: '16px',
               }}
             >
-              02 / WHAT WE BUILD
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
+                }}
+              />
+              <span
+                style={{
+                  fontFamily: "'Space Grotesk', monospace",
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: 'rgba(255, 255, 255, 0.75)',
+                }}
+              >
+                01 // WHAT WE BUILD
+              </span>
             </div>
 
+            {/* Section Headline */}
             <h2
               style={{
-                fontSize: 'clamp(24px, 6.5vw, 34px)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                marginBottom: '24px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(28px, 7.5vw, 38px)',
+                fontWeight: 800,
+                lineHeight: 1.12,
+                letterSpacing: '-0.035em',
+                color: '#ffffff',
+                margin: '0 0 12px 0',
               }}
             >
               Specialized Digital Capabilities
             </h2>
 
+            {/* Section Subhead */}
+            <p
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.55)',
+                maxWidth: '460px',
+                margin: '0 0 32px 0',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              From autonomous AI pipelines to sub-second architectures, we engineer digital products built for scale, performance, and durability.
+            </p>
+
             {/* Services Cards Stack */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {SERVICES_DATA.map((srv) => (
-                <div
-                  key={srv.id}
-                  style={{
-                    padding: '20px 18px',
-                    borderRadius: '18px',
-                    background: '#07080f',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
+              {SERVICES_DATA.map((srv) => {
+                const serviceIcon =
+                  srv.id === '01' ? (
+                    <Sparkles size={16} strokeWidth={2} />
+                  ) : srv.id === '02' ? (
+                    <Cpu size={16} strokeWidth={2} />
+                  ) : srv.id === '03' ? (
+                    <Smartphone size={16} strokeWidth={2} />
+                  ) : (
+                    <Zap size={16} strokeWidth={2} />
+                  )
+
+                return (
                   <div
+                    key={srv.id}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '10px',
+                      position: 'relative',
+                      borderRadius: '24px',
+                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 28%, rgba(10, 12, 20, 0.94) 60%, rgba(5, 6, 12, 0.98) 100%)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderTop: '1.5px solid rgba(255, 255, 255, 0.28)',
+                      padding: '24px 20px 22px',
+                      boxShadow: '0 24px 48px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+                      overflow: 'hidden',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
                     }}
                   >
-                    <span
+                    {/* Top Specular Sheen Layer */}
+                    <div
+                      aria-hidden="true"
                       style={{
-                        fontFamily: "'Space Grotesk', sans-serif",
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        color: srv.accent || '#ffe135',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '45%',
+                        background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.01) 45%, transparent 100%)',
+                        pointerEvents: 'none',
+                        borderRadius: '24px 24px 0 0',
+                      }}
+                    />
+
+                    {/* Top Hairline Light Prism */}
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '12%',
+                        right: '12%',
+                        height: '1px',
+                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5) 50%, transparent)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+
+                    {/* Header Row: Number / Badge Capsule & Action Disc Button */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '16px',
                       }}
                     >
-                      {srv.number}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '10.5px',
-                        fontWeight: 600,
-                        padding: '3px 8px',
-                        borderRadius: '999px',
-                        background: 'rgba(255, 255, 255, 0.06)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                      }}
-                    >
-                      {srv.badge}
-                    </span>
-                  </div>
-
-                  <h3
-                    style={{
-                      fontSize: '18px',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      marginBottom: '6px',
-                    }}
-                  >
-                    {srv.category}
-                  </h3>
-
-                  <p
-                    style={{
-                      fontSize: '13.5px',
-                      color: 'rgba(255, 255, 255, 0.65)',
-                      lineHeight: 1.5,
-                      marginBottom: '14px',
-                    }}
-                  >
-                    {srv.description}
-                  </p>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {srv.features.map((feat, fIdx) => (
                       <div
-                        key={fIdx}
                         style={{
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
                           gap: '8px',
-                          fontSize: '12px',
-                          color: 'rgba(255, 255, 255, 0.75)',
+                          padding: '5px 12px',
+                          borderRadius: '999px',
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          boxShadow: 'inset 0 1px 0.5px rgba(255, 255, 255, 0.25)',
                         }}
                       >
                         <span
                           style={{
-                            width: '4px',
-                            height: '4px',
-                            borderRadius: '50%',
-                            background: srv.accent || '#ffe135',
+                            fontFamily: "'Space Grotesk', monospace",
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            color: '#ffffff',
+                            letterSpacing: '0.04em',
                           }}
-                        />
-                        {feat}
+                        >
+                          {srv.number}
+                        </span>
+                        <span style={{ color: 'rgba(255, 255, 255, 0.25)', fontSize: '11px' }}>/</span>
+                        <span
+                          style={{
+                            fontFamily: "'Space Grotesk', sans-serif",
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: 'rgba(255, 255, 255, 0.82)',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {srv.badge}
+                        </span>
                       </div>
-                    ))}
+
+                      {/* Frosted Action Disc with Diagonal Arrow */}
+                      <div
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 100%)',
+                          border: '1px solid rgba(255, 255, 255, 0.18)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'rgba(255, 255, 255, 0.85)',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3)',
+                        }}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="7" y1="17" x2="17" y2="7" />
+                          <polyline points="7 7 17 7 17 17" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Service Title with Distinctive Category Icon */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        marginBottom: '8px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '10px',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          flexShrink: 0,
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
+                        }}
+                      >
+                        {serviceIcon}
+                      </div>
+
+                      <h3
+                        style={{
+                          fontFamily: "'Plus Jakarta Sans', 'Space Grotesk', sans-serif",
+                          fontSize: '19px',
+                          fontWeight: 700,
+                          color: '#ffffff',
+                          letterSpacing: '-0.025em',
+                          margin: 0,
+                          lineHeight: 1.25,
+                        }}
+                      >
+                        {srv.category}
+                      </h3>
+                    </div>
+
+                    {/* Service Description */}
+                    <p
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        fontSize: '13.5px',
+                        color: 'rgba(255, 255, 255, 0.62)',
+                        lineHeight: 1.55,
+                        margin: '0 0 16px 0',
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {srv.description}
+                    </p>
+
+                    {/* Frosted Feature Pills */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        zIndex: 1,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '7px',
+                      }}
+                    >
+                      {srv.features.map((feat, fIdx) => (
+                        <div
+                          key={fIdx}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '5px 11px',
+                            borderRadius: '999px',
+                            background: 'rgba(255, 255, 255, 0.035)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            fontSize: '11.5px',
+                            fontWeight: 500,
+                            color: 'rgba(255, 255, 255, 0.82)',
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                            letterSpacing: '-0.005em',
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '4px',
+                              height: '4px',
+                              borderRadius: '50%',
+                              background: '#ffffff',
+                              opacity: 0.55,
+                              flexShrink: 0,
+                            }}
+                          />
+                          {feat}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 5. LOCATION & REGIONAL ECOSYSTEM                                          */}
-        {/* ========================================================================= */}
-        <section
-          id="mobile-location"
-          style={{
-            padding: '48px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            backgroundColor: '#030712',
-          }}
-        >
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: '#38bdf8',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
-              }}
-            >
-              03 / LOCATION
-            </div>
-
-            <h2
-              style={{
-                fontSize: 'clamp(24px, 6.5vw, 34px)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                marginBottom: '16px',
-              }}
-            >
-              Rooted in Kolkata, Engineering for the World
-            </h2>
-
-            {/* Static Map Graphic Card */}
-            <div
-              style={{
-                borderRadius: '20px',
-                background: '#080912',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                overflow: 'hidden',
-                position: 'relative',
-                marginBottom: '20px',
-              }}
-            >
-              <div
-                style={{
-                  height: '180px',
-                  width: '100%',
-                  position: 'relative',
-                  backgroundImage: 'url(/textures/kolkata-map.png)',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              >
-                {/* Overlay vignette */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(to bottom, rgba(3, 7, 18, 0.4), rgba(3, 7, 18, 0.95))',
-                  }}
-                />
-
-                {/* Pin marker */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '14px',
-                      height: '14px',
-                      borderRadius: '50%',
-                      background: '#00f0ff',
-                      boxShadow: '0 0 16px #00f0ff',
-                      border: '2px solid #ffffff',
-                    }}
-                  />
-                  <div
-                    style={{
-                      marginTop: '6px',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      background: 'rgba(0, 0, 0, 0.85)',
-                      border: '1px solid rgba(0, 240, 255, 0.4)',
-                      fontSize: '10.5px',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    Kolkata Tech Hub
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Footer details */}
-              <div
-                style={{
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Clock size={15} color="#00f0ff" />
-                  <span style={{ fontSize: '12.5px', color: 'rgba(255, 255, 255, 0.85)' }}>
-                    {kolkataTime || 'Loading IST...'}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                    color: '#4ade80',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#22c55e' }} />
-                  Global Delivery
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 6. FEATURED PROJECTS SHOWCASE                                             */}
+        {/* 4. FEATURED PROJECTS SHOWCASE — Obsidian Cinematic Carousel               */}
         {/* ========================================================================= */}
         <section
           id="mobile-projects"
           style={{
-            padding: '48px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            position: 'relative',
+            padding: '64px 20px clamp(80px, 12vh, 110px)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
             backgroundColor: '#000000',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          {/* Subtle Ambient Radial Glow */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '100%',
+              maxWidth: '600px',
+              height: '350px',
+              background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255, 255, 255, 0.035) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+
+          <div style={{ maxWidth: '640px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            {/* Header Row: Kicker & Monospace Slide Counter */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                marginBottom: '10px',
+                marginBottom: '16px',
               }}
             >
               <div
                 style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  letterSpacing: '0.15em',
-                  color: '#00f0ff',
-                  textTransform: 'uppercase',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
                 }}
               >
-                04 / FEATURED WORK
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#ffffff',
+                    boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: "'Space Grotesk', monospace",
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(255, 255, 255, 0.75)',
+                  }}
+                >
+                  02 // FEATURED WORK
+                </span>
               </div>
 
+              {/* Monospace Counter */}
               <div
                 style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
-                  fontSize: '12px',
-                  color: 'rgba(255, 255, 255, 0.5)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '5px 12px',
+                  borderRadius: '999px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  fontFamily: "'Space Grotesk', monospace",
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  letterSpacing: '0.04em',
                 }}
               >
-                0{currentProjectIdx + 1} / 0{projectsData.length}
+                <span>0{currentProjectIdx + 1}</span>
+                <span style={{ opacity: 0.35 }}>/</span>
+                <span style={{ opacity: 0.6 }}>0{projectsData.length}</span>
               </div>
             </div>
 
+            {/* Section Headline */}
             <h2
               style={{
-                fontSize: 'clamp(24px, 6.5vw, 34px)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
-                marginBottom: '20px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(28px, 7.5vw, 38px)',
+                fontWeight: 800,
+                lineHeight: 1.12,
+                letterSpacing: '-0.035em',
+                color: '#ffffff',
+                margin: '0 0 12px 0',
               }}
             >
               Selected Client Projects
             </h2>
 
-            {/* Active Project Card */}
-            <div
+            {/* Section Subhead */}
+            <p
               style={{
-                borderRadius: '22px',
-                background: '#090a12',
-                border: '1px solid rgba(255, 255, 255, 0.09)',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8)',
-                overflow: 'hidden',
-                marginBottom: '18px',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.55)',
+                maxWidth: '460px',
+                margin: '0 0 30px 0',
+                letterSpacing: '-0.01em',
               }}
             >
-              {/* Project Image Viewport */}
+              A curation of production systems, bespoke digital platforms, and mobile products engineered with precision.
+            </p>
+
+            {/* Cinematic Project Card */}
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onMouseEnter={() => { isProjectPausedRef.current = true }}
+              onMouseLeave={() => { isProjectPausedRef.current = false }}
+              style={{
+                position: 'relative',
+                borderRadius: '24px',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 28%, rgba(10, 12, 20, 0.94) 60%, rgba(5, 6, 12, 0.98) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderTop: '1.5px solid rgba(255, 255, 255, 0.28)',
+                boxShadow: '0 28px 56px -14px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.12)',
+                overflow: 'hidden',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                marginBottom: '20px',
+                touchAction: 'pan-y',
+              }}
+            >
+              {/* Inner animated wrapper keyed to currentProjectIdx */}
+              <div
+                key={currentProjectIdx}
+                style={{
+                  animation: 'mobileProjectFade 0.38s cubic-bezier(0.16, 1, 0.3, 1)',
+                  width: '100%',
+                }}
+              >
+                {/* Project Image Viewport */}
               <div
                 style={{
                   width: '100%',
-                  height: '210px',
+                  height: 'clamp(210px, 56vw, 240px)',
                   backgroundColor: '#04050a',
                   position: 'relative',
                   overflow: 'hidden',
@@ -1180,33 +1318,74 @@ export default function MobileView() {
                   }}
                   loading="lazy"
                 />
+
+                {/* Smooth Gradient Vignette Fading Image to Card Base */}
                 <div
                   style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                    background: 'rgba(0, 0, 0, 0.8)',
-                    backdropFilter: 'blur(8px)',
+                    inset: 0,
+                    background: 'linear-gradient(to top, rgba(7, 8, 14, 0.95) 0%, rgba(7, 8, 14, 0.35) 45%, transparent 100%)',
+                  }}
+                />
+
+                {/* Floating Capsule Badge */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '14px',
+                    left: '14px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 12px',
+                    borderRadius: '999px',
+                    background: 'rgba(0, 0, 0, 0.82)',
+                    backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     fontSize: '11px',
                     fontWeight: 600,
                     color: '#ffffff',
+                    letterSpacing: '0.02em',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5)',
                   }}
                 >
-                  {currentProject.year} • {currentProject.category}
+                  <span style={{ color: 'rgba(255, 255, 255, 0.75)' }}>{currentProject.year}</span>
+                  <span style={{ opacity: 0.35 }}>•</span>
+                  <span>{currentProject.category}</span>
+                </div>
+
+                {/* Top Right External Arrow Disc */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '14px',
+                    right: '14px',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                  }}
+                >
+                  <ExternalLink size={13} />
                 </div>
               </div>
 
-              {/* Project Info */}
-              <div style={{ padding: '20px 18px' }}>
+              {/* Project Body Info */}
+              <div style={{ padding: '22px 20px 24px' }}>
                 <h3
                   style={{
-                    fontSize: '19px',
-                    fontWeight: 700,
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    letterSpacing: '-0.025em',
                     color: '#ffffff',
-                    marginBottom: '8px',
+                    margin: '0 0 10px 0',
                     lineHeight: 1.25,
                   }}
                 >
@@ -1215,82 +1394,112 @@ export default function MobileView() {
 
                 <p
                   style={{
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: '13.5px',
-                    lineHeight: 1.6,
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    marginBottom: '16px',
+                    lineHeight: 1.58,
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    margin: '0 0 18px 0',
+                    letterSpacing: '-0.01em',
                   }}
                 >
                   {currentProject.description}
                 </p>
 
-                {/* Tech Tags */}
+                {/* Frosted Tech Chips */}
                 <div
                   style={{
                     display: 'flex',
                     flexWrap: 'wrap',
-                    gap: '6px',
-                    marginBottom: '20px',
+                    gap: '7px',
+                    marginBottom: '22px',
                   }}
                 >
                   {currentProject.tags.map((tag, tIdx) => (
-                    <span
+                    <div
                       key={tIdx}
                       style={{
-                        padding: '4px 9px',
-                        borderRadius: '6px',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.09)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '5px 11px',
+                        borderRadius: '999px',
+                        background: 'rgba(255, 255, 255, 0.035)',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                         fontSize: '11px',
-                        color: 'rgba(255, 255, 255, 0.85)',
+                        fontWeight: 500,
+                        color: 'rgba(255, 255, 255, 0.82)',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif",
                       }}
                     >
+                      <span
+                        style={{
+                          width: '4px',
+                          height: '4px',
+                          borderRadius: '50%',
+                          background: '#ffffff',
+                          opacity: 0.55,
+                          flexShrink: 0,
+                        }}
+                      />
                       {tag}
-                    </span>
+                    </div>
                   ))}
                 </div>
 
+                {/* Case Study CTA Button */}
                 <a
                   href={currentProject.link || '#'}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '6px',
+                    gap: '8px',
+                    padding: '11px 20px',
+                    borderRadius: '999px',
+                    background: '#ffffff',
+                    color: '#000000',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     fontSize: '13px',
                     fontWeight: 700,
-                    color: '#00f0ff',
                     textDecoration: 'none',
+                    letterSpacing: '-0.01em',
+                    boxShadow: '0 4px 16px rgba(255, 255, 255, 0.15)',
+                    transition: 'all 0.2s ease',
                   }}
                 >
-                  EXPLORE CASE STUDY
-                  <ExternalLink size={13} />
+                  Explore Project
+                  <ArrowRight size={14} />
                 </a>
               </div>
             </div>
+            </div>
 
-            {/* Carousel Navigation Controls */}
+            {/* Carousel Navigation Controls Bar */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                padding: '4px 2px',
               }}
             >
-              <div style={{ display: 'flex', gap: '8px' }}>
+              {/* Arrow Buttons & Play/Pause Button */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
                   onClick={prevProject}
                   aria-label="Previous project"
                   style={{
-                    width: '42px',
-                    height: '42px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
                     background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   <ChevronLeft size={20} />
@@ -1300,38 +1509,70 @@ export default function MobileView() {
                   onClick={nextProject}
                   aria-label="Next project"
                   style={{
-                    width: '42px',
-                    height: '42px',
+                    width: '44px',
+                    height: '44px',
                     borderRadius: '50%',
-                    background: 'rgba(0, 240, 255, 0.12)',
-                    border: '1px solid rgba(0, 240, 255, 0.35)',
-                    color: '#00f0ff',
+                    background: 'rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.24)',
+                    color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   <ChevronRight size={20} />
                 </button>
+
+                {/* Autoplay Play/Pause Toggle Button */}
+                <button
+                  onClick={() => {
+                    setIsProjectAutoPlay((prev) => !prev)
+                    isProjectPausedRef.current = false
+                  }}
+                  aria-label={isProjectAutoPlay ? 'Pause automatic slideshow' : 'Play automatic slideshow'}
+                  title={isProjectAutoPlay ? 'Pause automatic slideshow' : 'Play automatic slideshow'}
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: isProjectAutoPlay ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                    border: isProjectAutoPlay ? '1px solid rgba(0, 240, 255, 0.35)' : '1px solid rgba(255, 255, 255, 0.14)',
+                    color: isProjectAutoPlay ? '#00f0ff' : 'rgba(255, 255, 255, 0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: isProjectAutoPlay ? '0 0 12px rgba(0, 240, 255, 0.22)' : '0 4px 14px rgba(0, 0, 0, 0.3)',
+                    transition: 'all 0.2s ease',
+                    marginLeft: '2px',
+                  }}
+                >
+                  {isProjectAutoPlay ? <Pause size={15} /> : <Play size={15} style={{ marginLeft: '1px' }} />}
+                </button>
               </div>
 
-              {/* Dots Indicator */}
+              {/* Dynamic Pill Dots Indicator */}
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {projectsData.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentProjectIdx(idx)}
+                    onClick={() => {
+                      handleUserInteractProject()
+                      setCurrentProjectIdx(idx)
+                    }}
                     aria-label={`Jump to project ${idx + 1}`}
                     style={{
                       height: '5px',
-                      width: idx === currentProjectIdx ? '22px' : '6px',
+                      width: idx === currentProjectIdx ? '26px' : '6px',
                       borderRadius: '999px',
-                      background: idx === currentProjectIdx ? '#00f0ff' : 'rgba(255, 255, 255, 0.2)',
+                      background: idx === currentProjectIdx ? '#ffffff' : 'rgba(255, 255, 255, 0.22)',
                       border: 'none',
                       padding: 0,
                       cursor: 'pointer',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     }}
                   />
                 ))}
@@ -1341,61 +1582,154 @@ export default function MobileView() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 7. CLIENTS & PROCESS SECTION                                              */}
+        {/* 7. CLIENTS & PROCESS SECTION (MATCHING HERO SECTION THEME & TYPOGRAPHY)   */}
         {/* ========================================================================= */}
         <section
           id="mobile-process"
           style={{
-            padding: '48px 0',
-            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-            backgroundColor: '#030712',
+            position: 'relative',
+            padding: '64px 0 72px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            backgroundColor: '#000000',
             overflow: 'hidden',
           }}
         >
-          <div style={{ padding: '0 20px', maxWidth: '640px', margin: '0 auto 24px' }}>
+          {/* Architectural grid lines (exact match to Hero Section) */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `
+                linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px)
+              `,
+              backgroundSize: '48px 48px',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+
+          {/* Radial vignette mask over grid (matching Hero Section) */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 30%, #000000 100%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Subtle top ambient glow (matching Hero Section) */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '70vw',
+              height: '35vh',
+              background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Section Header */}
+          <div style={{ position: 'relative', zIndex: 2, padding: '0 20px', maxWidth: '640px', margin: '0 auto 30px' }}>
+            {/* Pill Badge (matching Hero squircle buttons & badges) */}
             <div
               style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: '#c084fc',
-                textTransform: 'uppercase',
-                marginBottom: '10px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '5px 12px',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                marginBottom: '16px',
               }}
             >
-              05 / CLIENTS & PROCESS
+              <span
+                style={{
+                  width: '5px',
+                  height: '5px',
+                  borderRadius: '50%',
+                  background: '#ffffff',
+                  boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)',
+                }}
+              />
+              <span
+                style={{
+                  fontSize: '10.5px',
+                  fontWeight: 700,
+                  letterSpacing: '0.12em',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  textTransform: 'uppercase',
+                  fontFamily: "'Space Grotesk', monospace",
+                }}
+              >
+                05 / METHODOLOGY & PROCESS
+              </span>
             </div>
 
+            {/* Heading (matching Hero wordmark font & weight) */}
             <h2
               style={{
-                fontSize: 'clamp(24px, 6.5vw, 34px)',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 'clamp(28px, 7.5vw, 38px)',
+                fontWeight: 800,
+                lineHeight: 1.12,
+                letterSpacing: '-0.035em',
+                color: '#ffffff',
+                margin: '0 0 12px 0',
               }}
             >
               Our Proven Methodology
             </h2>
+
+            {/* Subtitle (matching Hero tagline typography) */}
+            <p
+              style={{
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'rgba(255, 255, 255, 0.58)',
+                margin: 0,
+                maxWidth: '440px',
+                fontWeight: 400,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              We engineer high-performance web products, mobile platforms, and automated software with a disciplined, end-to-end execution pipeline.
+            </p>
           </div>
 
-          {/* Client Logos CSS Marquee (0% CPU / No WebGL) */}
+          {/* Client Logos CSS Marquee with Edge Vignette */}
           <div
             style={{
+              position: 'relative',
               width: '100%',
               overflow: 'hidden',
               padding: '16px 0',
-              marginBottom: '36px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-              background: 'rgba(0, 0, 0, 0.3)',
+              marginBottom: '40px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+              background: 'transparent',
+              maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+              zIndex: 2,
             }}
           >
             <div
               style={{
                 display: 'flex',
-                gap: '36px',
+                gap: '16px',
                 width: 'max-content',
-                animation: 'mobileMarquee 24s linear infinite',
+                animation: 'mobileMarquee 26s linear infinite',
               }}
             >
               {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((logo, lIdx) => (
@@ -1404,26 +1738,31 @@ export default function MobileView() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    opacity: 0.65,
+                    gap: '10px',
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    background: '#080910',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
                   }}
                 >
                   <img
                     src={logo.url}
                     alt={logo.name}
                     style={{
-                      height: '24px',
+                      height: '20px',
                       width: 'auto',
-                      filter: 'grayscale(100%) brightness(1.6)',
+                      filter: 'grayscale(100%) brightness(1.7)',
                       display: 'block',
                     }}
                   />
                   <span
                     style={{
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: 600,
                       color: 'rgba(255, 255, 255, 0.75)',
                       letterSpacing: '0.08em',
+                      fontFamily: "'Space Grotesk', monospace",
                     }}
                   >
                     {logo.name}
@@ -1433,65 +1772,233 @@ export default function MobileView() {
             </div>
           </div>
 
-          {/* 4 Process Steps */}
+          {/* Connected Process Pipeline */}
           <div
             style={{
               padding: '0 20px',
               maxWidth: '640px',
               margin: '0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
+              position: 'relative',
+              zIndex: 2,
             }}
           >
-            {PROCESS_STEPS.map((step) => (
-              <div
-                key={step.step}
-                style={{
-                  padding: '18px 16px',
-                  borderRadius: '16px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
-                  display: 'flex',
-                  gap: '14px',
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    color: step.accent || '#c084fc',
-                    lineHeight: 1,
-                    marginTop: '3px',
-                  }}
-                >
-                  {step.step}
-                </div>
-                <div>
-                  <h4
+            {/* Vertical Laser Spine Line (Monochrome Silver/White) */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: '42px',
+                top: '28px',
+                bottom: '40px',
+                width: '2px',
+                background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.04) 100%)',
+                boxShadow: '0 0 8px rgba(255, 255, 255, 0.12)',
+                zIndex: 1,
+              }}
+            />
+
+            {/* Step Cards List */}
+            <div
+              style={{
+                position: 'relative',
+                zIndex: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px',
+              }}
+            >
+              {MOBILE_PROCESS_STEPS.map((step) => {
+                const isSelected = activeProcessStep === step.step
+                return (
+                  <div
+                    key={step.step}
+                    onClick={() => setActiveProcessStep(isSelected ? null : step.step)}
                     style={{
-                      fontSize: '16px',
-                      fontWeight: 700,
-                      color: '#ffffff',
-                      marginBottom: '4px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '16px',
+                      cursor: 'pointer',
+                      transition: 'transform 0.25s ease',
                     }}
                   >
-                    {step.title}
-                  </h4>
-                  <p
-                    style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.65)',
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}
-                  >
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-            ))}
+                    {/* Left Squircle Node (Matching Hero squircle buttons: width 44, borderRadius 13) */}
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '13px',
+                        background: '#080910',
+                        border: isSelected
+                          ? '1px solid rgba(255, 255, 255, 0.35)'
+                          : '1px solid rgba(255, 255, 255, 0.14)',
+                        boxShadow: isSelected
+                          ? '0 10px 28px rgba(0, 0, 0, 0.7), 0 0 16px rgba(255, 255, 255, 0.08)'
+                          : '0 8px 24px rgba(0, 0, 0, 0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        flexShrink: 0,
+                        marginTop: '4px',
+                        transition: 'all 0.3s ease',
+                        transform: isSelected ? 'scale(1.06)' : 'scale(1)',
+                      }}
+                    >
+                      {step.icon}
+
+                      {/* Mini Number Badge */}
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: '-5px',
+                          right: '-5px',
+                          fontSize: '9.5px',
+                          fontWeight: 700,
+                          fontFamily: "'Space Grotesk', monospace",
+                          background: '#0e0f18',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          color: '#ffffff',
+                          padding: '1px 5px',
+                          borderRadius: '6px',
+                          lineHeight: 1.2,
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.6)',
+                        }}
+                      >
+                        {step.step}
+                      </span>
+                    </div>
+
+                    {/* Right Card (Matching Hero Bento Obsidian Card) */}
+                    <div
+                      style={{
+                        flex: 1,
+                        background: isSelected ? '#0c0d16' : '#080910',
+                        border: isSelected
+                          ? '1px solid rgba(255, 255, 255, 0.22)'
+                          : '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '18px',
+                        padding: '18px 16px 16px',
+                        boxShadow: isSelected
+                          ? '0 18px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 255, 255, 0.04)'
+                          : '0 14px 32px rgba(0, 0, 0, 0.6)',
+                        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      }}
+                    >
+                      {/* Top Meta Line: Phase Badge + Tagline */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          marginBottom: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span
+                            style={{
+                              fontFamily: "'Space Grotesk', monospace",
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              color: 'rgba(255, 255, 255, 0.42)',
+                              letterSpacing: '0.12em',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            PHASE {step.step}
+                          </span>
+                          <span
+                            style={{
+                              width: '3px',
+                              height: '3px',
+                              borderRadius: '50%',
+                              backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 500,
+                              color: 'rgba(255, 255, 255, 0.65)',
+                            }}
+                          >
+                            {step.tagline}
+                          </span>
+                        </div>
+
+                        <span
+                          style={{
+                            fontSize: '9px',
+                            color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.25)',
+                            transition: 'color 0.2s ease',
+                          }}
+                        >
+                          {isSelected ? '●' : '○'}
+                        </span>
+                      </div>
+
+                      {/* Main Title (Plus Jakarta Sans, 700) */}
+                      <h4
+                        style={{
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          fontSize: '17px',
+                          fontWeight: 700,
+                          color: '#ffffff',
+                          letterSpacing: '-0.02em',
+                          margin: '0 0 6px 0',
+                        }}
+                      >
+                        {step.title}
+                      </h4>
+
+                      {/* Description */}
+                      <p
+                        style={{
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.58)',
+                          lineHeight: 1.58,
+                          margin: '0 0 14px 0',
+                          letterSpacing: '-0.01em',
+                        }}
+                      >
+                        {step.description}
+                      </p>
+
+                      {/* Deliverable Tags Row (Matching Hero's 100K+ / </> buttons) */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {step.deliverables.map((tag, tIdx) => (
+                          <span
+                            key={tIdx}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              background: '#0e0f18',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              fontSize: '11px',
+                              fontWeight: 500,
+                              color: 'rgba(255, 255, 255, 0.82)',
+                              fontFamily: "'Space Grotesk', monospace",
+                              letterSpacing: '0.01em',
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </section>
 
@@ -1803,110 +2310,265 @@ export default function MobileView() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 9. FOOTER SECTION                                                         */}
+        {/* 9. FOOTER SECTION — Architectural Obsidian Redesign                       */}
         {/* ========================================================================= */}
         <footer
           style={{
-            padding: '36px 20px 48px',
+            position: 'relative',
+            padding: '54px 20px 120px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: '#020308',
-            textAlign: 'center',
+            backgroundColor: '#030408',
+            overflow: 'hidden',
           }}
         >
-          <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          {/* ── Architectural grid lines ── */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+              `,
+              backgroundSize: '48px 48px',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+
+          {/* ── Top subtle glow ── */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '80vw',
+              height: '30vh',
+              background: 'radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.04) 0%, transparent 70%)',
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+
+          <div style={{ position: 'relative', zIndex: 2, maxWidth: '640px', margin: '0 auto' }}>
+            {/* ── TOP ROW: Studio Brand & Back to Top ── */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: '16px',
+                marginBottom: '28px',
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <img
+                    src="/logo.png"
+                    alt="Soultech Logo"
+                    style={{ height: '24px', width: 'auto', display: 'block' }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                      fontWeight: 800,
+                      fontSize: '16px',
+                      letterSpacing: '-0.02em',
+                      color: '#ffffff',
+                    }}
+                  >
+                    SOULTECHIES
+                  </span>
+                </div>
+
+                <p
+                  style={{
+                    fontSize: '13px',
+                    lineHeight: 1.55,
+                    color: 'rgba(255, 255, 255, 0.52)',
+                    maxWidth: '300px',
+                    margin: 0,
+                    fontWeight: 400,
+                  }}
+                >
+                  Crafting high-performance digital products, full-stack web platforms, and automated software.
+                </p>
+              </div>
+
+              {/* Circular Back to Top Button (Matching Desktop Hero/Footer) */}
+              <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Back to top"
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  background: '#080910',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+                }}
+              >
+                <ArrowUp size={16} />
+              </button>
+            </div>
+
+            {/* ── SOCIAL CONNECT ROW (ICON BUTTONS) ── */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginBottom: '12px',
+                gap: '12px',
+                marginBottom: '26px',
               }}
             >
-              <img
-                src="/logo.png"
-                alt="Soultech Logo"
-                style={{ height: '28px', width: 'auto', display: 'block' }}
-              />
-              <span
+              {[
+                {
+                  label: 'LinkedIn',
+                  url: 'https://linkedin.com',
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.25c-.97 0-1.75.79-1.75 1.76s.78 1.76 1.75 1.76 1.75-.79 1.75-1.76-.78-1.76-1.75-1.76Z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'GitHub',
+                  url: 'https://github.com',
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'X (Twitter)',
+                  url: 'https://x.com',
+                  icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Discord',
+                  url: 'https://discord.com',
+                  icon: (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+                    </svg>
+                  ),
+                },
+              ].map((social, i) => (
+                <a
+                  key={i}
+                  href={social.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={social.label}
+                  aria-label={social.label}
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: '#080910',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: 'rgba(255, 255, 255, 0.75)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textDecoration: 'none',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)'
+                    e.currentTarget.style.color = '#ffffff'
+                    e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.background = '#10121d'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)'
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)'
+                    e.currentTarget.style.transform = 'translateY(0px)'
+                    e.currentTarget.style.background = '#080910'
+                  }}
+                >
+                  {social.icon}
+                </a>
+              ))}
+            </div>
+
+            {/* ── DIVIDER ── */}
+            <div
+              style={{
+                width: '100%',
+                height: '1px',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                marginBottom: '18px',
+              }}
+            />
+
+            {/* ── METADATA & COPYRIGHT ROW ── */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                fontFamily: "'Space Grotesk', monospace",
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.42)',
+                letterSpacing: '0.02em',
+                marginBottom: '20px',
+              }}
+            >
+              <div>All rights reserved © 2026 Soultechies.</div>
+              <div>Architected & Engineered with Soul in Kolkata</div>
+            </div>
+
+            {/* ── MASSIVE BRANDMARK WATERMARK (Edge-to-edge subtle gradient) ── */}
+            <div
+              style={{
+                width: '100%',
+                overflow: 'hidden',
+                display: 'flex',
+                justifyContent: 'center',
+                lineHeight: 0.78,
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            >
+              <div
                 style={{
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  letterSpacing: '0.08em',
-                  color: '#ffffff',
+                  fontSize: 'clamp(48px, 14vw, 76px)',
+                  fontWeight: 900,
+                  letterSpacing: '-0.045em',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 75%, transparent 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  whiteSpace: 'nowrap',
+                  transform: 'translateY(10%)',
                 }}
               >
                 SOULTECHIES
-              </span>
-            </div>
-
-            <p
-              style={{
-                fontSize: '12.5px',
-                color: 'rgba(255, 255, 255, 0.5)',
-                maxWidth: '380px',
-                margin: '0 auto 20px',
-              }}
-            >
-              Crafting premium digital experiences, full-stack web platforms, and automated software.
-            </p>
-
-            {/* Quick Links */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '18px',
-                flexWrap: 'wrap',
-                marginBottom: '24px',
-                fontSize: '12.5px',
-                fontWeight: 600,
-                color: 'rgba(255, 255, 255, 0.75)',
-              }}
-            >
-              <button
-                onClick={() => scrollToSection('mobile-hero')}
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
-              >
-                Home
-              </button>
-              <button
-                onClick={() => scrollToSection('mobile-about')}
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
-              >
-                About
-              </button>
-              <button
-                onClick={() => scrollToSection('mobile-services')}
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
-              >
-                Services
-              </button>
-              <button
-                onClick={() => scrollToSection('mobile-projects')}
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
-              >
-                Work
-              </button>
-              <button
-                onClick={() => scrollToSection('mobile-contact')}
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
-              >
-                Contact
-              </button>
-            </div>
-
-            <div
-              style={{
-                fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.35)',
-                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-                paddingTop: '18px',
-              }}
-            >
-              © {new Date().getFullYear()} Soultechies. All rights reserved. Built for performance.
+              </div>
             </div>
           </div>
         </footer>

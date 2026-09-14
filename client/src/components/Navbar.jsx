@@ -75,6 +75,17 @@ export default function Navbar({ isPreloaderDone }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(true)
   const [isMenuHovered, setIsMenuHovered] = useState(false)
+  const [isMobileScreen, setIsMobileScreen] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= 1024
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileScreen(window.innerWidth <= 1024)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const lastScrollY = useRef(0)
   const isAnimatingRef = useRef(false)
@@ -119,7 +130,7 @@ export default function Navbar({ isPreloaderDone }) {
     )
   }, [isPreloaderDone])
 
-  // Hide Navbar when footer curtain slides up (p >= 0.980)
+  // Hide Navbar when footer curtain slides up (p >= 0.980) — desktop only
   useEffect(() => {
     if (!isPreloaderDone || !wrapperRef.current) return
 
@@ -131,6 +142,16 @@ export default function Navbar({ isPreloaderDone }) {
       end: 'bottom bottom',
       scrub: true,
       onUpdate: (self) => {
+        // Do not hide navbar on mobile / tablet devices (screen width <= 1024px)
+        if (window.innerWidth <= 1024) {
+          if (hasEnteredRef.current && !isMenuOpen) {
+            wrapper.style.transform = 'translateX(-50%) translateY(0px)'
+            wrapper.style.opacity = '1'
+            wrapper.style.pointerEvents = 'auto'
+          }
+          return
+        }
+
         const p = self.progress
         if (p >= 0.980) {
           const t = Math.min(1.0, (p - 0.980) / 0.015)
@@ -399,12 +420,18 @@ export default function Navbar({ isPreloaderDone }) {
   // STRICT GUARD: Navbar is NOT rendered in DOM at all while preloader is running!
   if (!isPreloaderDone) return null
 
-  const mainLinks = [
-    { label: 'About Us', href: '#about', progress: 0.14 },
-    { label: 'Services', href: '#services', progress: 0.32 },
-    { label: 'Our Work', href: '#our-work', progress: 0.65 },
-    { label: 'Worked With', href: '#worked-with', progress: 0.86 },
-  ]
+  const mainLinks = isMobileScreen
+    ? [
+        { label: 'Services', href: '#mobile-services', targetId: 'mobile-services' },
+        { label: 'Our Work', href: '#mobile-projects', targetId: 'mobile-projects' },
+        { label: 'Worked With', href: '#mobile-process', targetId: 'mobile-process' },
+      ]
+    : [
+        { label: 'About Us', href: '#about', progress: 0.14 },
+        { label: 'Services', href: '#services', progress: 0.32 },
+        { label: 'Our Work', href: '#our-work', progress: 0.65 },
+        { label: 'Worked With', href: '#worked-with', progress: 0.86 },
+      ]
 
   const leftSecondary = ['Support', 'Terms of Use', 'Policy Privacy']
   const rightSecondary = ['Linkedin', 'Instagram']
@@ -517,6 +544,13 @@ export default function Navbar({ isPreloaderDone }) {
             <div ref={rightContentRef} style={{ willChange: 'opacity', zIndex: 10 }}>
               <button
                 onClick={() => {
+                  if (isMobileScreen) {
+                    const el = document.getElementById('mobile-contact')
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth' })
+                      return
+                    }
+                  }
                   const maxScroll = document.documentElement.scrollHeight - window.innerHeight
                   window.scrollTo({ top: maxScroll * 0.95, behavior: 'smooth' })
                 }}
@@ -575,6 +609,13 @@ export default function Navbar({ isPreloaderDone }) {
               <span
                 onClick={() => {
                   handleCloseMenu()
+                  if (isMobileScreen) {
+                    const el = document.getElementById('mobile-hero')
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth' })
+                      return
+                    }
+                  }
                   window.scrollTo({ top: 0, behavior: 'smooth' })
                 }}
                 style={{
@@ -613,7 +654,12 @@ export default function Navbar({ isPreloaderDone }) {
                   onClick={(e) => {
                     e.preventDefault()
                     handleCloseMenu()
-                    if (link.progress !== undefined) {
+                    if (isMobileScreen) {
+                      const el = document.getElementById(link.targetId || link.href.replace('#', ''))
+                      if (el) {
+                        el.scrollIntoView({ behavior: 'smooth' })
+                      }
+                    } else if (link.progress !== undefined) {
                       const maxScroll = document.documentElement.scrollHeight - window.innerHeight
                       window.scrollTo({ top: maxScroll * link.progress, behavior: 'smooth' })
                     }
@@ -719,6 +765,18 @@ export default function Navbar({ isPreloaderDone }) {
 
             {/* Bottom CTA Button ("Contact") */}
             <button
+              onClick={() => {
+                handleCloseMenu()
+                if (isMobileScreen) {
+                  const el = document.getElementById('mobile-contact')
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' })
+                    return
+                  }
+                }
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+                window.scrollTo({ top: maxScroll * 0.95, behavior: 'smooth' })
+              }}
               style={{
                 width: '100%',
                 padding: '16px',

@@ -147,7 +147,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
       ) {
         handleNavigateRef.current?.(1)
       }
-    }, 2000)
+    }, 3500)
   }, [])
 
   // Sequential, seamless vertical track sliding handler
@@ -233,7 +233,7 @@ export default function ProjectShowcase({ isPreloaderDone }) {
     const el = containerRef.current
 
     const updateProgress = (p) => {
-      isSectionVisibleRef.current = p >= 0.580 && p < 0.810
+      isSectionVisibleRef.current = p >= 0.550 && p < 0.810
 
       if (p < 0.550) {
         el.style.opacity = '0'
@@ -291,12 +291,6 @@ export default function ProjectShowcase({ isPreloaderDone }) {
   return (
     <div
       ref={containerRef}
-      onMouseEnter={() => {
-        isHoveredRef.current = true
-      }}
-      onMouseLeave={() => {
-        isHoveredRef.current = false
-      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -636,6 +630,12 @@ export default function ProjectShowcase({ isPreloaderDone }) {
         {/* ========================================================= */}
         <div
           ref={carouselViewportRef}
+          onMouseEnter={() => {
+            isHoveredRef.current = true
+          }}
+          onMouseLeave={() => {
+            isHoveredRef.current = false
+          }}
           style={{
             position: 'relative',
             height: '100%',

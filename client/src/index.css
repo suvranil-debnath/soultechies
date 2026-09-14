@@ -346,6 +346,20 @@ html.lenis, html.lenis body {
 
 
 /* ==========================================================================
+   Mobile Project Carousel Fade Transition
+   ========================================================================== */
+@keyframes mobileProjectFade {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================================
    Mobile Navbar position - move pill slightly higher on small screens
    ========================================================================== */
 @media (max-width: 1024px) {
