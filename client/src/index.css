@@ -346,7 +346,7 @@ html.lenis, html.lenis body {
 
 
 /* ==========================================================================
-   Mobile Navbar position — move pill slightly higher on small screens
+   Mobile Navbar position - move pill slightly higher on small screens
    ========================================================================== */
 @media (max-width: 1024px) {
   [data-navbar-wrapper] {
