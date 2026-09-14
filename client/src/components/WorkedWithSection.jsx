@@ -6,7 +6,7 @@ import { Application } from '@splinetool/runtime'
 gsap.registerPlugin(ScrollTrigger)
 
 // Client logo SVGs served directly from public directory (/logos/...)
-const CLIENT_LOGOS = [
+export const CLIENT_LOGOS = [
   { id: 'airbnb', name: 'AIRBNB', url: '/logos/airbnb-2-logo-svgrepo-com.svg' },
   { id: 'amazon', name: 'AMAZON', url: '/logos/amazon-icon-logo-svgrepo-com.svg' },
   { id: 'apple', name: 'APPLE', url: '/logos/apple-logo-svgrepo-com.svg' },
@@ -29,7 +29,7 @@ const SERVICES = [
   'Custom Architecture',
 ]
 
-const PROCESS_STEPS = [
+export const PROCESS_STEPS = [
   {
     step: '01',
     title: 'DISCOVER',

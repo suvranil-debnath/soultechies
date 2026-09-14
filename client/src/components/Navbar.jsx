@@ -430,6 +430,7 @@ export default function Navbar({ isPreloaderDone }) {
       {/* Main Floating Wrapper Pinned at Fixed Screen Position (bottom: 32px) */}
       <div
         ref={wrapperRef}
+        data-navbar-wrapper
         style={{
           position: 'fixed',
           bottom: '32px',

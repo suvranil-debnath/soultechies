@@ -331,3 +331,25 @@ html.lenis, html.lenis body {
     line-height: 1.5 !important;
   }
 }
+
+/* ==========================================================================
+   Mobile & Tablet Marquee Animation (Pure CSS, 0% CPU Overhead)
+   ========================================================================== */
+@keyframes mobileMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+
+/* ==========================================================================
+   Mobile Navbar position — move pill slightly higher on small screens
+   ========================================================================== */
+@media (max-width: 1024px) {
+  [data-navbar-wrapper] {
+    bottom: 52px !important;
+  }
+}

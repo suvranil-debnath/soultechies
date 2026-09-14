@@ -4,7 +4,7 @@ import gsap from 'gsap'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const SERVICES_DATA = [
+export const SERVICES_DATA = [
   {
     id: '01',
     number: '01',

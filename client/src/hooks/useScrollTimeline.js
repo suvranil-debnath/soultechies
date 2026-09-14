@@ -5,10 +5,12 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-export function useScrollTimeline(isPreloaderDone = true) {
+export function useScrollTimeline(isPreloaderDone = true, enabled = true) {
   const lenisRef = useRef(null)
 
   useEffect(() => {
+    if (!enabled) return
+
     // Disable browser scroll restoration so refresh always starts at top
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual'
@@ -38,9 +40,10 @@ export function useScrollTimeline(isPreloaderDone = true) {
       gsap.ticker.remove(tick)
       lenis.destroy()
     }
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
+    if (!enabled) return
     const lenis = lenisRef.current
     if (!lenis) return
 
