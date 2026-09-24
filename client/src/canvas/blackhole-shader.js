@@ -375,8 +375,8 @@ export function createBlackHoleShader(uniforms) {
     const innerR = uniforms.diskInnerRadius;
     const outerR = uniforms.diskOuterRadius;
 
-    // Raymarching loop
-    Loop(64, () => {
+    // Raymarching loop (optimized step count for high 60fps throughput)
+    Loop(48, () => {
       If(escaped.greaterThan(0.5).or(captured.greaterThan(0.5)).or(alpha.greaterThan(0.99)), () => {
         Break();
       });

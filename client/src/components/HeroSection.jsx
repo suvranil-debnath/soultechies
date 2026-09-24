@@ -155,10 +155,12 @@ export default function HeroSection({ isPreloaderDone, onGapMeasured }) {
         s.style.transform = `translateX(${(-ease * 75).toFixed(1)}vw)`
         s.style.opacity = op.toFixed(4)
         s.style.filter = `blur(${blur}px)`
+        s.style.visibility = op <= 0 ? 'hidden' : 'visible'
 
         ultechies.style.transform = `translateX(${(ease * 75).toFixed(1)}vw)`
         ultechies.style.opacity = op.toFixed(4)
         ultechies.style.filter = `blur(${blur}px)`
+        ultechies.style.visibility = op <= 0 ? 'hidden' : 'visible'
 
         // Cards and topNav exit slightly faster (p: 0.00 -> 0.045) so canvas is clean before black hole zoom
         const cardT = Math.min(1, p / 0.045)

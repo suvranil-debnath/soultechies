@@ -47,9 +47,9 @@ export default function ServicesSection({ isPreloaderDone }) {
   const containerRef = useRef(null)
   const leftLabelRef = useRef(null)
   const cardsContainerRef = useRef(null)
+  const counterRef = useRef(null)
+  const currentStepRef = useRef(0)
   const cardRefs = useRef([])
-
-  const [activeStep, setActiveStep] = useState(0)
 
   // Timeline Milestones:
   // p: 0.25 -> 0.39 (~175vh total travel, snappy ~45vh scroll distance per card transition)
@@ -119,7 +119,12 @@ export default function ServicesSection({ isPreloaderDone }) {
       }
 
       const currentIdx = Math.min(3, Math.max(0, Math.round(cardProgress)))
-      setActiveStep(currentIdx)
+      if (currentStepRef.current !== currentIdx) {
+        currentStepRef.current = currentIdx
+        if (counterRef.current) {
+          counterRef.current.textContent = `0${currentIdx + 1}`
+        }
+      }
 
       // Generous physical clearance travel distance (580px ensures cards are never close or overlapping)
       const cardTravelDistance = 580
@@ -248,6 +253,7 @@ export default function ServicesSection({ isPreloaderDone }) {
 
         {/* 2. Massive Active Step Counter Beside the Text Towards the Center */}
         <div
+          ref={counterRef}
           style={{
             fontFamily: "'Space Grotesk', monospace",
             fontSize: 'clamp(180px, 24vh, 320px)',
@@ -261,7 +267,7 @@ export default function ServicesSection({ isPreloaderDone }) {
             transition: 'color 0.35s ease',
           }}
         >
-          0{activeStep + 1}
+          01
         </div>
       </div>
 
@@ -292,10 +298,10 @@ export default function ServicesSection({ isPreloaderDone }) {
               opacity: idx === 0 ? 1 : 0,
               transform: idx === 0 ? 'translateY(0px) scale(1)' : `translateY(${idx * 580}px) scale(0.92)`,
               borderRadius: 'clamp(28px, 2.8vw, 36px)',
-              // Apple Liquid Glass - Pure frosted obsidian smoked crystal
+              // Apple Liquid Glass - Pure frosted obsidian smoked crystal (optimized 22px blur for 60fps)
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 22%, rgba(14, 18, 28, 0.88) 55%, rgba(6, 8, 14, 0.96) 100%)',
-              backdropFilter: 'blur(45px) saturate(190%)',
-              WebkitBackdropFilter: 'blur(45px) saturate(190%)',
+              backdropFilter: 'blur(22px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(22px) saturate(160%)',
               padding: 'clamp(30px, 3.4vh, 40px) clamp(28px, 2.6vw, 38px)',
               boxSizing: 'border-box',
               color: '#ffffff',

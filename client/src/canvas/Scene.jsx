@@ -63,7 +63,7 @@ export const userConfig = {
   "noiseEvolutionSpeed": 5,
   "qualityPreset": "medium",
   "rayJitter": 1,
-  "raySteps": 68,
+  "raySteps": 48,
   "ringBrightness": 0.4,
   "ringContrast": 0.95,
   "ringEnabled": true,
@@ -114,6 +114,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
   const aboutUsBaseY = useRef(-0.3)
   const baseOffsetPx = useRef(0) // pixel translateX after O-gap snap
   const isIntroComplete = useRef(false)
+  const isSceneVisibleRef = useRef(true)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -141,7 +142,7 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
 
     const renderer = new THREE.WebGPURenderer({ antialias: true })
     renderer.setSize(renderW, renderH)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.toneMapping = THREE.ACESFilmicToneMapping
 
     container.appendChild(renderer.domElement)
@@ -168,6 +169,8 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
     // 3D Split "ABOUT" & "US" text meshes placed behind the Earth (Z = -2.4)
     const aboutMesh = createAboutTextMesh()
     const usMesh = createUsTextMesh()
+    aboutMesh.visible = false
+    usMesh.visible = false
     scene.add(aboutMesh)
     scene.add(usMesh)
     aboutTextMeshRef.current = aboutMesh
@@ -180,6 +183,9 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       if (isDisposed) return
       animationFrameId = requestAnimationFrame(animate)
 
+      // CULLING OPTIMIZATION: Do zero GPU rendering when 3D scene is completely hidden past p > 0.58
+      if (!isSceneVisibleRef.current) return
+
       const currentTime = performance.now()
       const deltaTime = Math.min((currentTime - lastFrameTime) / 1000, 0.033)
       lastFrameTime = currentTime
@@ -189,7 +195,11 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       techEarth.update(deltaTime)
 
       // Subtle weightless breathing float on About & Us text when revealed
-      if (aboutTextMeshRef.current && aboutTextMeshRef.current.material.opacity > 0.05) {
+      if (
+        aboutTextMeshRef.current &&
+        aboutTextMeshRef.current.visible &&
+        aboutTextMeshRef.current.material.opacity > 0.05
+      ) {
         const time = currentTime * 0.001
         const floatY = Math.sin(time * 1.5) * 0.02
         aboutTextMeshRef.current.position.y = aboutUsBaseY.current + floatY
@@ -313,14 +323,19 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
       trigger: document.body,
       start: 'top top',
       end: '100% bottom',
-      scrub: 1.2,
+      scrub: true,
       onUpdate: (self) => {
+        const p = self.progress
+        const isVis = p <= 0.58
+        isSceneVisibleRef.current = isVis
+        if (containerRef.current) {
+          containerRef.current.style.visibility = isVis ? 'visible' : 'hidden'
+        }
+
         const sim = simulationRef.current
         const camera = cameraRef.current
         const techEarth = techEarthRef.current
         if (!sim || !camera) return
-
-        const p = self.progress
 
         // Protect intro zoom-out animation if user has not scrolled yet
         if (!isIntroComplete.current && p < 0.005) {
@@ -364,8 +379,16 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
             techEarth.setPinpointOpacity(0.0)
             techEarth.setMapOpacity(0.0)
           }
-          if (aboutMesh) aboutMesh.material.opacity = 0.0
-          if (usMesh) usMesh.material.opacity = 0.0
+          if (aboutMesh) {
+            aboutMesh.visible = false
+            aboutMesh.material.opacity = 0.0
+            aboutMesh.position.set(-3.8, -0.3, -2.4)
+          }
+          if (usMesh) {
+            usMesh.visible = false
+            usMesh.material.opacity = 0.0
+            usMesh.position.set(4.2, -0.3, -2.4)
+          }
         } else {
           // p > 0.09: BLACK HOLE IS 100% GONE AND DISAPPEARED!
           if (bloomPassNodeRef.current) {
@@ -392,13 +415,18 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setMapOpacity(0.0)
             }
 
+            const textOp = Math.min(1.0, t * 1.5)
+            const isTextVis = textOp > 0.005
+
             if (aboutMesh) {
+              aboutMesh.visible = isTextVis
               aboutMesh.position.set(-3.8, -0.3, -2.4)
-              aboutMesh.material.opacity = Math.min(1.0, t * 1.5)
+              aboutMesh.material.opacity = textOp
             }
             if (usMesh) {
+              usMesh.visible = isTextVis
               usMesh.position.set(4.2, -0.3, -2.4)
-              usMesh.material.opacity = Math.min(1.0, t * 1.5)
+              usMesh.material.opacity = textOp
             }
           } else if (p <= 0.25) {
             // Stage 2: Text Split & Earth Centering (p: 0.18 -> 0.25)
@@ -422,12 +450,15 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
             // "ABOUT" slides left, "US" slides right
             const easeT = t * t
             const textOpacity = Math.max(0, 1.0 - t * 1.6)
+            const isTextVis = textOpacity > 0.005
 
             if (aboutMesh) {
+              aboutMesh.visible = isTextVis
               aboutMesh.position.set(-3.8 - easeT * 20.0, -0.3, -2.4)
               aboutMesh.material.opacity = textOpacity
             }
             if (usMesh) {
+              usMesh.visible = isTextVis
               usMesh.position.set(4.2 + easeT * 20.0, -0.3, -2.4)
               usMesh.material.opacity = textOpacity
             }
@@ -447,8 +478,14 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setMapOpacity(0.0)
             }
 
-            if (aboutMesh) aboutMesh.material.opacity = 0.0
-            if (usMesh) usMesh.material.opacity = 0.0
+            if (aboutMesh) {
+              aboutMesh.visible = false
+              aboutMesh.material.opacity = 0.0
+            }
+            if (usMesh) {
+              usMesh.visible = false
+              usMesh.material.opacity = 0.0
+            }
           } else if (p <= 0.47) {
             // Stage 3: Continuous Spin to Kolkata Target Lock (p: 0.39 -> 0.47)
             const t = (p - 0.39) / 0.08
@@ -465,8 +502,14 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setMapOpacity(0.0)
             }
 
-            if (aboutMesh) aboutMesh.material.opacity = 0.0
-            if (usMesh) usMesh.material.opacity = 0.0
+            if (aboutMesh) {
+              aboutMesh.visible = false
+              aboutMesh.material.opacity = 0.0
+            }
+            if (usMesh) {
+              usMesh.visible = false
+              usMesh.material.opacity = 0.0
+            }
           } else if (p <= 0.55) {
             // Stage 4: GTA V Satellite Dive into Kolkata (p: 0.47 -> 0.55)
             const t = (p - 0.47) / 0.08
@@ -490,8 +533,14 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setMapOpacity(0.0)
             }
 
-            if (aboutMesh) aboutMesh.material.opacity = 0.0
-            if (usMesh) usMesh.material.opacity = 0.0
+            if (aboutMesh) {
+              aboutMesh.visible = false
+              aboutMesh.material.opacity = 0.0
+            }
+            if (usMesh) {
+              usMesh.visible = false
+              usMesh.material.opacity = 0.0
+            }
           } else {
             // Stage 5 & Beyond (p > 0.55): Map reveal, Project Showcase & Worked With
             camera.position.set(0, 0, 4.0)
@@ -506,8 +555,14 @@ export default function Scene({ isPreloaderDone, registerSnapCallback }) {
               techEarth.setScale(1.65)
             }
 
-            if (aboutMesh) aboutMesh.material.opacity = 0.0
-            if (usMesh) usMesh.material.opacity = 0.0
+            if (aboutMesh) {
+              aboutMesh.visible = false
+              aboutMesh.material.opacity = 0.0
+            }
+            if (usMesh) {
+              usMesh.visible = false
+              usMesh.material.opacity = 0.0
+            }
           }
         }
       }

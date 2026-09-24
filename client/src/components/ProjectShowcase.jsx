@@ -237,18 +237,25 @@ export default function ProjectShowcase({ isPreloaderDone }) {
 
       if (p < 0.550) {
         el.style.opacity = '0'
+        el.style.visibility = 'hidden'
         el.style.pointerEvents = 'none'
         el.style.transform = 'translateY(36px)'
       } else if (p <= 0.610) {
         const t = (p - 0.550) / 0.060
         const eased = t * (2 - t) // ease-out
+        el.style.visibility = 'visible'
         el.style.opacity = eased.toFixed(4)
         el.style.pointerEvents = eased > 0.4 ? 'auto' : 'none'
         el.style.transform = `translateY(${(36 * (1 - eased)).toFixed(1)}px)`
-      } else {
+      } else if (p < 0.820) {
+        el.style.visibility = 'visible'
         el.style.opacity = '1'
-        el.style.pointerEvents = p < 0.820 ? 'auto' : 'none'
+        el.style.pointerEvents = 'auto'
         el.style.transform = 'translateY(0px)'
+      } else {
+        el.style.visibility = 'hidden'
+        el.style.opacity = '0'
+        el.style.pointerEvents = 'none'
       }
     }
 

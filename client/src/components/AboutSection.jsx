@@ -34,6 +34,7 @@ export default function AboutSection({ isPreloaderDone }) {
         if (p < 0.09) {
           // 100% hidden on hero screen / refresh
           container.style.opacity = '0'
+          container.style.visibility = 'hidden'
           container.style.pointerEvents = 'none'
           leftCol.style.opacity = '0'
           leftCol.style.transform = 'translateY(24px)'
@@ -46,6 +47,7 @@ export default function AboutSection({ isPreloaderDone }) {
           const opacity = Math.min(1, eased * 1.2)
           const y = (1 - eased) * 24
 
+          container.style.visibility = 'visible'
           container.style.opacity = opacity.toFixed(4)
           container.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none'
 
@@ -60,6 +62,7 @@ export default function AboutSection({ isPreloaderDone }) {
           const easeT = t * t
           const opacity = Math.max(0, 1.0 - t * 1.6)
 
+          container.style.visibility = 'visible'
           container.style.opacity = opacity.toFixed(4)
           container.style.pointerEvents = opacity > 0.1 ? 'auto' : 'none'
 
@@ -71,6 +74,7 @@ export default function AboutSection({ isPreloaderDone }) {
         } else {
           // Fully gone after 25%
           container.style.opacity = '0'
+          container.style.visibility = 'hidden'
           container.style.pointerEvents = 'none'
           leftCol.style.opacity = '0'
           rightCol.style.opacity = '0'

@@ -78,6 +78,7 @@ export function createAboutTextMesh() {
   mesh.position.set(-3.8, -0.3, -2.4)
   mesh.renderOrder = 0
   mesh.name = 'AboutTextMesh'
+  mesh.visible = false
   return mesh
 }
 
@@ -114,6 +115,7 @@ export function createUsTextMesh() {
   mesh.position.set(4.2, -0.3, -2.4)
   mesh.renderOrder = 0
   mesh.name = 'UsTextMesh'
+  mesh.visible = false
   return mesh
 }
 

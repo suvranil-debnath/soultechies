@@ -255,7 +255,7 @@ export default function FooterSection({ isPreloaderDone }) {
             </span>
             {[
               { label: 'Home', action: () => scrollToTop() },
-              { label: 'About Us', action: () => scrollToSection(0.32) },
+              { label: 'About Us', action: () => scrollToSection(0.14) },
               { label: 'Map Ecosystem', action: () => scrollToSection(0.56) },
               { label: 'Projects', action: () => scrollToSection(0.68) },
               { label: 'Contact', action: () => scrollToSection(0.95) },

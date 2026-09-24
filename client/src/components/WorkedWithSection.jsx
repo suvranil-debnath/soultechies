@@ -304,6 +304,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   const processRightRef = useRef(null)
   const processBridgeRef = useRef(null)
   const hoveredProcessStepRef = useRef(null)
+  const isStageActiveRef = useRef(false)
 
   const [splineLoaded, setSplineLoaded] = useState(false)
   const [hoveredLogo, setHoveredLogo] = useState(null)
@@ -391,6 +392,8 @@ export default function WorkedWithSection({ isPreloaderDone }) {
   // Real-time smooth cursor tracking with lerping / damping
   useEffect(() => {
     const handlePointerMove = (e) => {
+      if (!isStageActiveRef.current) return
+
       // Normalize mouse to [-1, 1] relative to viewport
       const x = (e.clientX / window.innerWidth) * 2 - 1
       const y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -415,6 +418,11 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
     // Damped animation loop for natural organic look-at motion
     const animateLookAt = () => {
+      rafRef.current = requestAnimationFrame(animateLookAt)
+
+      // CULLING OPTIMIZATION: Zero overhead when WorkedWith stage is offscreen (p < 0.79)
+      if (!isStageActiveRef.current) return
+
       // Robot focuses on the hovered process card, or follows cursor smoothly
       const target = hoveredProcessStepRef.current || mouseTargetRef.current
       const curr = mouseCurrentRef.current
@@ -443,8 +451,6 @@ export default function WorkedWithSection({ isPreloaderDone }) {
 
         formCardRef.current.style.transform = `perspective(1800px) translate3d(${transX}px, ${transY}px, 0px) rotateZ(${rotZ}deg) rotateY(${rotY}deg) rotateX(${rotX}deg)`
       }
-
-      rafRef.current = requestAnimationFrame(animateLookAt)
     }
 
     rafRef.current = requestAnimationFrame(animateLookAt)
@@ -477,6 +483,7 @@ export default function WorkedWithSection({ isPreloaderDone }) {
       scrub: true,
       onUpdate: (self) => {
         const p = self.progress
+        isStageActiveRef.current = p >= 0.79 && p <= 0.995
 
         const modelWrapper = modelWrapperRef.current
         const marqueeWrapper = marqueeWrapperRef.current

@@ -35,6 +35,7 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
 
         if (p < BURST_START) {
           el.style.opacity       = '0'
+          el.style.visibility    = 'hidden'
           el.style.pointerEvents = 'none'
           img.style.opacity      = '0'
           img.style.transform    = 'scale(0.28)'
@@ -44,6 +45,8 @@ export default function KolkataMapOverlay({ isPreloaderDone }) {
           img.style.webkitMaskImage  = initMask
           return
         }
+
+        el.style.visibility = p <= 0.84 ? 'visible' : 'hidden'
 
         if (p <= BURST_END) {
           // Phase 1: Iris burst from center dot to full sharp map (0.60 -> 0.68)
