@@ -434,7 +434,11 @@ export default function Navbar({ isPreloaderDone }) {
       ]
 
   const leftSecondary = ['Support', 'Terms of Use', 'Policy Privacy']
-  const rightSecondary = ['Linkedin', 'Instagram']
+  const rightSecondary = [
+    { label: 'LinkedIn', url: 'https://www.linkedin.com/company/soultechies-corp/' },
+    { label: 'Instagram', url: 'https://www.instagram.com/soultechies.corp?stkn=cnFpaWFvNW1veWRy' },
+    { label: 'Facebook', url: 'https://www.facebook.com/share/1BBTk12Aw8/' },
+  ]
 
   return (
     <>
@@ -739,8 +743,10 @@ export default function Navbar({ isPreloaderDone }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {rightSecondary.map((item) => (
                   <a
-                    key={item}
-                    href="#"
+                    key={item.label}
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={handleCloseMenu}
                     style={{
                       fontFamily: "'Space Grotesk', 'Outfit', sans-serif",
@@ -748,16 +754,20 @@ export default function Navbar({ isPreloaderDone }) {
                       fontWeight: 600,
                       color: '#1c1c22',
                       textDecoration: 'none',
-                      transition: 'opacity 0.2s',
+                      transition: 'opacity 0.2s, transform 0.2s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.opacity = '0.6'
+                      e.currentTarget.style.transform = 'translateX(2px)'
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.opacity = '1'
+                      e.currentTarget.style.transform = 'translateX(0)'
                     }}
                   >
-                    {item}
+                    {item.label}
                   </a>
                 ))}
               </div>

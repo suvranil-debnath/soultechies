@@ -337,17 +337,17 @@ export default function FooterSection({ isPreloaderDone }) {
               NETWORK
             </span>
             {[
-              { label: 'LinkedIn', url: 'https://linkedin.com' },
-              { label: 'Instagram', url: 'https://instagram.com' },
+              { label: 'LinkedIn', url: 'https://www.linkedin.com/company/soultechies-corp/' },
+              { label: 'Instagram', url: 'https://www.instagram.com/soultechies.corp?stkn=cnFpaWFvNW1veWRy' },
+              { label: 'Facebook', url: 'https://www.facebook.com/share/1BBTk12Aw8/' },
               { label: 'X (Twitter)', url: 'https://x.com' },
               { label: 'GitHub', url: 'https://github.com' },
-              { label: 'Discord', url: 'https://discord.com' },
             ].map((social) => (
               <a
                 key={social.label}
                 href={social.url}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 style={{
                   color: 'rgba(255, 255, 255, 0.65)',
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
